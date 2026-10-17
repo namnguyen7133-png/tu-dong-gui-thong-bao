@@ -9,7 +9,7 @@ FOLDER_IDS = [
     "1p7moumoWX7nDlyX3xuc25Uf2ZQnNJ9-",  # Thư mục thứ nhất
     "1sYC2srrQiTGzn5dKJxBplROPMiSI17E0",
     "1o4Y_EXUqagW18pni2CJUGt_2fDYyBwtB",
-    "1kk7IFBdtda8hC_gIdvOMGcIYTKXcmKe-",
+    "1kk7IFBdtda8hC_gIdvOMGcIYTKXcmKe-"
     # Thư mục thứ hai bạn vừa cung cấp
 ]
 
