@@ -4,13 +4,12 @@ import os
 import subprocess
 import gdown
 
-# Danh sách các ID thư mục Google Drive của bạn
+# Danh sách đầy đủ 4 ID thư mục Google Drive của bạn
 FOLDER_IDS = [
     "1p7moumoWX7nDlyX3xuc25Uf2ZQnNJ9-",  # Thư mục thứ nhất
-    "1sYC2srrQiTGzn5dKJxBplROPMiSI17E0",
-    "1o4Y_EXUqagW18pni2CJUGt_2fDYyBwtB",
-    "1kk7IFBdtda8hC_gIdvOMGcIYTKXcmKe-"
-    # Thư mục thứ hai bạn vừa cung cấp
+    "1sYC2srrQiTGzn5dKJxBplROPMiSI17E0",  # Thư mục thứ hai
+    "1o4Y_EXUqagW18pni2CJUGt_2fDYyBwtB",  # Thư mục thứ ba
+    "1kk7IFBdtda8hC_gIdvOMGcIYTKXcmKe-"   # Thư mục thứ tư
 ]
 
 def download_files_from_drive():
