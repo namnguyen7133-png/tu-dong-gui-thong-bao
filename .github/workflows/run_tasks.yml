@@ -6,6 +6,12 @@ on:
   workflow_dispatch: # Cho phép bấm chạy thủ công
 
 jobs:
+jobs:
+  run-from-drive:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Cho phép Bot ghi đè dữ liệu lên kho lưu trữ
+      
   run-from-drive:
     runs-on: ubuntu-latest
 
