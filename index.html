@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo Cáo Tự Động</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f6f9; margin: 0; padding: 16px; color: #333; }
+        h1 { text-align: center; font-size: 1.4rem; }
+        .last-updated { text-align: center; font-size: 0.8rem; color: #718096; margin-bottom: 16px; }
+        .card { background: white; border-radius: 8px; padding: 14px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 4px solid #4299e1; }
+        .card.success { border-left-color: #48bb78; }
+        .card.error { border-left-color: #f56565; }
+        .header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 8px; }
+        pre { background: #edf2f7; padding: 8px; border-radius: 4px; font-size: 0.8rem; overflow-x: auto; max-height: 200px; }
+        button { width: 100%; padding: 10px; background: #3182ce; color: white; border: none; border-radius: 6px; font-weight: bold; margin-bottom: 16px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>📊 Dữ Liệu Từ Google Drive</h1>
+    <div class="last-updated" id="time">Đang tải...</div>
+    <button onclick="loadData()">🔄 Làm mới dữ liệu</button>
+    <div id="box"></div>
+
+    <script>
+        async function loadData() {
+            try {
+                let res = await fetch('./aggregated_output.json?t=' + Date.now());
+                let data = await res.json();
+                document.getElementById('time').innerText = 'Cập nhật lần cuối: ' + new Date().toLocaleTimeString('vi-VN');
+                let html = '';
+                data.forEach(i => {
+                    let ok = i.status === 'Thành công';
+                    html += `<div class="card ${ok ? 'success' : 'error'}">
+                        <div class="header"><span>📌 ${i.task}</span><span>${i.status}</span></div>
+                        <pre>${JSON.stringify(i.output || i.error, null, 2)}</pre>
+                    </div>`;
+                });
+                document.getElementById('box').innerHTML = html;
+            } catch(e) {
+                document.getElementById('box').innerHTML = '<div class="card error">Đang kết nối Google Drive và xử lý dữ liệu...</div>';
+            }
+        }
+        loadData();
+    </script>
+</body>
+</html>
