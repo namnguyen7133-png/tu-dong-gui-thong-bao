@@ -2,45 +2,20 @@ import glob
 import json
 import os
 import subprocess
-import gdown
 
-# Mã ID thư mục Google Drive của bạn
-FOLDER_ID = "1p7moumoWX7nDlyX3xuc25Uf2ZQnNJ9-"
-
-def download_files_from_drive():
-    print(f"📡 Đang tải các tệp từ Google Drive (ID: {FOLDER_ID})...")
-    
-    os.makedirs("drive_files", exist_ok=True)
-    
-    url = f"https://drive.google.com/drive/folders/{FOLDER_ID}"
-    # Đã bỏ tham số remaining_ok ở đây để tương thích với mọi phiên bản gdown
-    gdown.download_folder(url=url, output="drive_files", quiet=False)
-    
-    os.makedirs("scripts", exist_ok=True)
-    os.makedirs("data", exist_ok=True)
-
-    for root, dirs, files in os.walk("drive_files"):
-        for file in files:
-            full_path = os.path.join(root, file)
-            if file.endswith(".py"):
-                os.rename(full_path, os.path.join("scripts", file))
-            elif file.endswith(".json"):
-                os.rename(full_path, os.path.join("data", file))
-
-    print("✅ Đã hoàn tất tải tệp từ Google Drive!")
-
-def execute_scripts():
+def main():
     results = []
+    # Quét toàn bộ file .py có sẵn trong thư mục scripts của GitHub
     python_files = sorted(glob.glob("scripts/*.py"))
 
     if not python_files:
-        print("⚠️ Không tìm thấy tệp .py nào trong thư mục Drive!")
+        print("⚠️ Chưa có tệp Python nào trong thư mục scripts/. Hãy thêm tệp vào đây.")
 
     for py_file in python_files:
         base_name = os.path.splitext(os.path.basename(py_file))[0]
         json_file = f"data/{base_name}.json"
 
-        print(f"🚀 Đang chạy tệp: {py_file}...")
+        print(f"🚀 Đang chạy: {py_file}...")
 
         try:
             process = subprocess.run(
@@ -61,14 +36,14 @@ def execute_scripts():
             })
 
         except Exception as e:
-            print(f"❌ Lỗi khi chạy {py_file}: {e}")
+            print(f"❌ Lỗi: {e}")
             results.append({"task": base_name, "status": "Lỗi", "error": str(e)})
 
+    # Xuất file kết quả ra trang web
     with open("aggregated_output.json", "w", encoding="utf-8") as f:
         json.dump(results, f, ensure_ascii=False, indent=4)
 
-    print("🎉 Đã xuất xong dữ liệu tổng hợp!")
+    print("🎉 Hoàn tất!")
 
 if __name__ == "__main__":
-    download_files_from_drive()
-    execute_scripts()
+    main()
