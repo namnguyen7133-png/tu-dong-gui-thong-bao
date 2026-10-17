@@ -10,18 +10,15 @@ FOLDER_ID = "1p7moumoWX7nDlyX3xuc25Uf2ZQnNJ9-"
 def download_files_from_drive():
     print(f"📡 Đang tải các tệp từ Google Drive (ID: {FOLDER_ID})...")
     
-    # Tạo thư mục tạm để chứa các tệp tải về
     os.makedirs("drive_files", exist_ok=True)
     
-    # Tải toàn bộ nội dung thư mục Drive về thư mục drive_files
     url = f"https://drive.google.com/drive/folders/{FOLDER_ID}"
-    gdown.download_folder(url=url, output="drive_files", quiet=False, remaining_ok=True)
+    # Đã bỏ tham số remaining_ok ở đây để tương thích với mọi phiên bản gdown
+    gdown.download_folder(url=url, output="drive_files", quiet=False)
     
-    # Tạo sẵn các thư mục scripts và data
     os.makedirs("scripts", exist_ok=True)
     os.makedirs("data", exist_ok=True)
 
-    # Phân loại tệp tải về vào đúng vị trí
     for root, dirs, files in os.walk("drive_files"):
         for file in files:
             full_path = os.path.join(root, file)
@@ -67,7 +64,6 @@ def execute_scripts():
             print(f"❌ Lỗi khi chạy {py_file}: {e}")
             results.append({"task": base_name, "status": "Lỗi", "error": str(e)})
 
-    # Xuất dữ liệu tổng hợp ra tệp JSON duy nhất cho web đọc
     with open("aggregated_output.json", "w", encoding="utf-8") as f:
         json.dump(results, f, ensure_ascii=False, indent=4)
 
