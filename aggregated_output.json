@@ -2,7 +2,7 @@
     {
         "task": "tinhthoigiandunthan",
         "status": "Thất bại",
-        "output": "Bỏ qua khay hệ thống trên GitHub.",
-        "stderr": "Traceback (most recent call last):\n  File \"/home/runner/work/tu-dong-gui-thong-bao/tu-dong-gui-thong-bao/downloaded_scripts/tinhthoigiandunthan.py\", line 20, in <module>\n    os.makedirs(os.path.dirname(FILE_MAC_DINH), exist_ok=True)\n  File \"/opt/hostedtoolcache/Python/3.10.22/x64/lib/python3.10/os.py\", line 225, in makedirs\n    mkdir(name, mode)\nFileNotFoundError: [Errno 2] No such file or directory: ''"
+        "output": "Chạy hoàn tất.",
+        "stderr": "Traceback (most recent call last):\n  File \"/home/runner/work/tu-dong-gui-thong-bao/tu-dong-gui-thong-bao/downloaded_scripts/tinhthoigiandunthan.py\", line 18, in <module>\n    os.makedirs(os.path.dirname(FILE_MAC_DINH), exist_ok=True)\n  File \"/opt/hostedtoolcache/Python/3.10.22/x64/lib/python3.10/os.py\", line 225, in makedirs\n    mkdir(name, mode)\nFileNotFoundError: [Errno 2] No such file or directory: ''"
     }
 ]
