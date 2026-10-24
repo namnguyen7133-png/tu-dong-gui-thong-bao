@@ -23,7 +23,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install gdown
+          pip install gdown pystray
 
       - name: Run script connect to Drive
         run: python run_from_drive.py
