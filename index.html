@@ -3,44 +3,224 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Báo Cáo Tự Động</title>
+    <title>Báo Cáo Tự Động - GitHub Actions</title>
     <style>
-        body { font-family: sans-serif; background: #f4f6f9; margin: 0; padding: 16px; color: #333; }
-        h1 { text-align: center; font-size: 1.4rem; }
-        .last-updated { text-align: center; font-size: 0.8rem; color: #718096; margin-bottom: 16px; }
-        .card { background: white; border-radius: 8px; padding: 14px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 4px solid #4299e1; }
-        .card.success { border-left-color: #48bb78; }
-        .card.error { border-left-color: #f56565; }
-        .header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 8px; }
-        pre { background: #edf2f7; padding: 8px; border-radius: 4px; font-size: 0.8rem; overflow-x: auto; max-height: 200px; }
-        button { width: 100%; padding: 10px; background: #3182ce; color: white; border: none; border-radius: 6px; font-weight: bold; margin-bottom: 16px; cursor: pointer; }
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --text-sub: #a0a0a0;
+            --success-color: #00e676;
+            --error-color: #ff5252;
+            --btn-bg: #29b6f6;
+            --btn-text: #000000;
+            --code-bg: #141414;
+            --border-color: #333333;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 16px;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.6rem;
+            margin-top: 8px;
+            margin-bottom: 6px;
+            color: #ffffff;
+            font-weight: 700;
+        }
+
+        .last-updated {
+            text-align: center;
+            font-size: 0.95rem;
+            color: var(--text-sub);
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+
+        .btn-refresh {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--btn-bg);
+            color: var(--btn-text);
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: active 0.1s;
+        }
+
+        .btn-refresh:active {
+            opacity: 0.8;
+            transform: scale(0.98);
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border-left: 6px solid #4299e1;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            border-top: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card.success {
+            border-left-color: var(--success-color);
+        }
+
+        .card.error {
+            border-left-color: var(--error-color);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.15rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge.success {
+            background-color: rgba(0, 230, 118, 0.15);
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+        }
+
+        .badge.error {
+            background-color: rgba(255, 82, 82, 0.15);
+            color: var(--error-color);
+            border: 1px solid var(--error-color);
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            color: #d4d4d4;
+            padding: 12px;
+            border-radius: 8px;
+            font-family: "Courier New", Consolas, monospace;
+            font-size: 0.95rem;
+            overflow-x: auto;
+            max-height: 280px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            border: 1px solid #2a2a2a;
+            margin: 0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-sub);
+            font-size: 1rem;
+        }
     </style>
 </head>
 <body>
-    <h1>📊 Dữ Liệu Từ Google Drive</h1>
-    <div class="last-updated" id="time">Đang tải...</div>
-    <button onclick="loadData()">🔄 Làm mới dữ liệu</button>
-    <div id="box"></div>
+    <div class="container">
+        <h1>📊 BÁO CÁO TỰ ĐỘNG</h1>
+        <div class="last-updated" id="time">Đang kiểm tra dữ liệu...</div>
+        
+        <button class="btn-refresh" onclick="loadData()">
+            <span>🔄</span> Làm mới dữ liệu
+        </button>
+        
+        <div id="box"></div>
+    </div>
 
     <script>
         async function loadData() {
+            const timeEl = document.getElementById('time');
+            const boxEl = document.getElementById('box');
+            
+            timeEl.innerText = 'Đang tải dữ liệu mới...';
+            
             try {
+                // Thêm timestamp để chống dính cache trên điện thoại
                 let res = await fetch('./aggregated_output.json?t=' + Date.now());
+                
+                if (!res.ok) {
+                    throw new Error('Chưa tìm thấy file aggregated_output.json hoặc đường dẫn bị lỗi');
+                }
+                
                 let data = await res.json();
-                document.getElementById('time').innerText = 'Cập nhật lần cuối: ' + new Date().toLocaleTimeString('vi-VN');
+                
+                let now = new Date();
+                let timeStr = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + 
+                              ' - ' + now.toLocaleDateString('vi-VN');
+                timeEl.innerText = 'Cập nhật lần cuối: ' + timeStr;
+                
+                if (!Array.isArray(data) || data.length === 0) {
+                    boxEl.innerHTML = '<div class="card"><div class="empty-state">File JSON rỗng hoặc chưa có dữ liệu báo cáo.</div></div>';
+                    return;
+                }
+                
                 let html = '';
                 data.forEach(i => {
-                    let ok = i.status === 'Thành công';
-                    html += `<div class="card ${ok ? 'success' : 'error'}">
-                        <div class="header"><span>📌 ${i.task}</span><span>${i.status}</span></div>
-                        <pre>${JSON.stringify(i.output || i.error, null, 2)}</pre>
+                    let isOk = i.status === 'Thành công' || i.status === 'Success' || i.status === 'OK';
+                    let statusText = i.status || (isOk ? 'Thành công' : 'Lỗi');
+                    let outputContent = i.output || i.error || i;
+
+                    html += `
+                    <div class="card ${isOk ? 'success' : 'error'}">
+                        <div class="header">
+                            <span>📌 ${i.task || 'Nhiệm vụ'}</span>
+                            <span class="badge ${isOk ? 'success' : 'error'}">${statusText}</span>
+                        </div>
+                        <pre>${typeof outputContent === 'object' ? JSON.stringify(outputContent, null, 2) : outputContent}</pre>
                     </div>`;
                 });
-                document.getElementById('box').innerHTML = html;
+                boxEl.innerHTML = html;
+                
             } catch(e) {
-                document.getElementById('box').innerHTML = '<div class="card error">Đang kết nối Google Drive và xử lý dữ liệu...</div>';
+                timeEl.innerText = 'Không thể kết nối dữ liệu';
+                boxEl.innerHTML = `
+                <div class="card error">
+                    <div class="header">
+                        <span>⚠️ Trạng thái kết nối</span>
+                        <span class="badge error">Lỗi</span>
+                    </div>
+                    <p style="margin: 0; color: #ff8a80; font-size: 0.95rem;">
+                        ${e.message}<br><br>
+                        <em>Lưu ý: Bạn hãy kiểm tra xem GitHub Action đã chạy xong và tạo file <b>aggregated_output.json</b> chưa nhé.</em>
+                    </p>
+                </div>`;
             }
         }
+
+        // Tự động tải dữ liệu ngay khi mở trang
         loadData();
     </script>
 </body>
