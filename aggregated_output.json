@@ -1,9 +1,9 @@
 [
     {
-        "task": "Kiem_tra_giao_dien",
-        "status": "Thành công",
+        "task": "tinhthoigiandunthan",
+        "status": "Thất bại",
         "output": {
-            "thong_bao": "Giao diện web đã kết nối và hiển thị thành công!"
+            "stderr": "Traceback (most recent call last):\n  File \"/home/runner/work/tu-dong-gui-thong-bao/tu-dong-gui-thong-bao/scripts/tinhthoigiandunthan.py\", line 9, in <module>\n    import pystray\nModuleNotFoundError: No module named 'pystray'"
         }
     }
 ]
