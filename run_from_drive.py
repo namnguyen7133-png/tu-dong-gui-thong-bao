@@ -24,7 +24,8 @@ DRIVE_FOLDER_IDS = [
     "1p7moumoWX7nDlyX3xuc25Uf2ZQnNJ9-",
     "1sYC2srrQiTGzn5dKJxBplROPMiSI17E0",
     "1o4Y_EXUqagW18pni2CJUGt_2fDYyBwtB",
-    "1kk7IFBdtda8hC_gIdvOMGcIYTKXcmKe-"
+    "1kk7IFBdtda8hC_gIdvOMGcIYTKXcmKe-",
+    "1EwJiCae3PCF82HZUzKCExYoDsnb_PmW1"  # <--- Thêm mới thư mục này vào đây ạ
 ]
 
 def download_folders():
