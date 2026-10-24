@@ -2,9 +2,26 @@ import os
 import subprocess
 import json
 from pathlib import Path
+import sys
+import types
 import gdown
 
-# Danh sách ID 4 thư mục Google Drive của anh
+# --- 1. TỰ ĐỘNG GIẢ LẬP PYSTRAY ĐỂ KHÔNG BAO GIỜ BỊ LỖI MÀN HÌNH ---
+# Đoạn này sẽ tự tạo ra một thư viện pystray "ảo" trên GitHub Actions 
+# để các script con gọi import pystray mà không bao giờ bị văng lỗi DisplayNameError.
+class DummyPystrayIcon:
+    def __init__(self, *args, **kwargs): pass
+    def run(self, *args, **kwargs): pass
+    def stop(self, *args, **kwargs): pass
+    def update_menu(self, *args, **kwargs): pass
+
+dummy_pystray = types.ModuleType('pystray')
+dummy_pystray.Icon = DummyPystrayIcon
+dummy_pystray.Menu = lambda *args, **kwargs: None
+dummy_pystray.MenuItem = lambda *args, **kwargs: None
+sys.modules['pystray'] = dummy_pystray
+
+# Danh sách 4 ID thư mục Google Drive của anh
 DRIVE_FOLDER_IDS = [
     "1p7moumoWX7nDlyX3xuc25Uf2ZQnNJ9-",
     "1sYC2srrQiTGzn5dKJxBplROPMiSI17E0",
@@ -20,7 +37,6 @@ def download_folders():
         url = f"https://drive.google.com/drive/folders/{folder_id}"
         print(f"📥 Đang tải thư mục từ Drive ID: {folder_id}")
         try:
-            # Dùng gdown để tải toàn bộ thư mục về máy chủ ảo
             gdown.download_folder(url, output=str(download_dir), quiet=False, use_cookies=False)
         except Exception as e:
             print(f"⚠️ Lỗi tải thư mục {folder_id}: {e}")
@@ -31,7 +47,7 @@ def run_all_scripts():
     download_dir = Path("downloaded_scripts")
     results = []
     
-    # Quét tất cả các tệp .py được tải về (bao gồm cả trong thư mục con)
+    # Quét tất cả các tệp .py được tải về
     py_files = list(download_dir.rglob("*.py"))
     print(f"🔍 Tìm thấy {len(py_files)} tệp Python.")
 
@@ -40,11 +56,16 @@ def run_all_scripts():
         print(f"🚀 Đang chạy: {script_name}.py")
         
         try:
+            # Thiết lập biến môi trường CI=true để các file python tự nhận biết đang chạy trên mây
+            env = os.environ.copy()
+            env["CI"] = "true"
+            
             process = subprocess.run(
                 ["python", str(script_path)],
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
+                env=env
             )
             
             output_content = process.stdout.strip()
@@ -67,7 +88,7 @@ def run_all_scripts():
                 "output": str(e)
             })
 
-    # Ghi kết quả ra tệp JSON để trang web hiển thị
+    # Ghi kết quả ra tệp aggregated_output.json để đưa lên trang web
     with open("aggregated_output.json", "w", encoding="utf-8") as f:
         json.dump(results, f, ensure_ascii=False, indent=4)
 
