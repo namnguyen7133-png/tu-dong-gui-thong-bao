@@ -1,1 +1,9 @@
-[]
+[
+    {
+        "task": "Kiem_tra_giao_dien",
+        "status": "Thành công",
+        "output": {
+            "thong_bao": "Giao diện web đã kết nối và hiển thị thành công!"
+        }
+    }
+]
