@@ -7,8 +7,6 @@ import types
 import gdown
 
 # --- 1. TỰ ĐỘNG GIẢ LẬP PYSTRAY ĐỂ KHÔNG BAO GIỜ BỊ LỖI MÀN HÌNH ---
-# Đoạn này sẽ tự tạo ra một thư viện pystray "ảo" trên GitHub Actions 
-# để các script con gọi import pystray mà không bao giờ bị văng lỗi DisplayNameError.
 class DummyPystrayIcon:
     def __init__(self, *args, **kwargs): pass
     def run(self, *args, **kwargs): pass
@@ -56,7 +54,7 @@ def run_all_scripts():
         print(f"🚀 Đang chạy: {script_name}.py")
         
         try:
-            # Thiết lập biến môi trường CI=true để các file python tự nhận biết đang chạy trên mây
+            # Thiết lập biến môi trường CI=true
             env = os.environ.copy()
             env["CI"] = "true"
             
@@ -69,10 +67,25 @@ def run_all_scripts():
             )
             
             output_content = process.stdout.strip()
-            try:
-                output_data = json.loads(output_content)
-            except:
-                output_data = output_content or "Chạy hoàn tất."
+            output_data = None
+            
+            # Xử lý thông minh: Tìm dòng JSON chuẩn xác nhất
+            if output_content:
+                for line in output_content.splitlines():
+                    line = line.strip()
+                    if line.startswith("{") and line.endswith("}"):
+                        try:
+                            output_data = json.loads(line)
+                            break
+                        except:
+                            pass
+            
+            # Nếu không tìm thấy JSON, tự tạo cấu trúc JSON báo thành công/thất bại chuẩn
+            if not output_data:
+                output_data = {
+                    "trang_thai": "Thành công" if process.returncode == 0 else "Lỗi",
+                    "thong_bao": output_content or "Chạy hoàn tất."
+                }
 
             results.append({
                 "task": script_name,
@@ -85,7 +98,7 @@ def run_all_scripts():
             results.append({
                 "task": script_name,
                 "status": "Thất bại",
-                "output": str(e)
+                "output": {"trang_thai": "Lỗi", "thong_bao": str(e)}
             })
 
     # Ghi kết quả ra tệp aggregated_output.json để đưa lên trang web
