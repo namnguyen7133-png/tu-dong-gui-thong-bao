@@ -1,18 +1,1 @@
-[
-  {
-    "file_name": "ten_file_python_1.json",
-    "content": {
-      "status": "Success",
-      "message": "Kết quả chạy script số 1 thành công"
-    },
-    "updated_at": "2026-10-25 07:44:00"
-  },
-  {
-    "file_name": "ten_file_python_2.json",
-    "content": {
-      "status": "Running",
-      "message": "Đang xử lý dữ liệu từ Google Drive"
-    },
-    "updated_at": "2026-10-25 07:44:00"
-  }
-]
+[]
