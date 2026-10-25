@@ -2,9 +2,9 @@
   {
     "file_name": "bao_cao_mau.json",
     "content": {
-      "trang_thai": "Hoạt động",
-      "thong_bao": "Đã kết nối thành công với Google Drive"
+      "status": "OK",
+      "message": "Đã kết nối thành công với Google Drive"
     },
-    "updated_at": "2026-10-25 07:25:00"
+    "updated_at": "2026-10-25 07:33:00"
   }
 ]
