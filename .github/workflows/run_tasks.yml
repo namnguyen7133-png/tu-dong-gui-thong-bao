@@ -25,12 +25,14 @@ jobs:
           pip install requests
 
       - name: Run Python script
-        run: python run_from_drive.py
+        run: |
+          python dieu_phoi_tong_6_tep.py
+          python tong_hop_json.py
 
       - name: Commit and push changes
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "github-actions[bot]"
           git add -A
-          git diff-index --quiet HEAD || git commit -m "Auto update JSON from Google Drive"
+          git diff-index --quiet HEAD || git commit -m "Auto update JSON and website data"
           git push
