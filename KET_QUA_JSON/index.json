@@ -124,5 +124,47 @@
         "file_nguon": "/home/runner/work/tu-dong-gui-thong-bao/tu-dong-gui-thong-bao/muc_6/bang_6.txt",
         "file_json_output": "chuong_trinh_muc_6_20261025_150449.json",
         "timestamp": "2026-10-25 15:04:49"
+    },
+    {
+        "ten_script_tao": "chuong_trinh",
+        "ten_thu_muc": "muc_1",
+        "file_nguon": "/home/runner/work/tu-dong-gui-thong-bao/tu-dong-gui-thong-bao/muc_1/bang_1.txt",
+        "file_json_output": "chuong_trinh_muc_1_20261025_154505.json",
+        "timestamp": "2026-10-25 15:45:05"
+    },
+    {
+        "ten_script_tao": "chuong_trinh",
+        "ten_thu_muc": "muc_2",
+        "file_nguon": "/home/runner/work/tu-dong-gui-thong-bao/tu-dong-gui-thong-bao/muc_2/bang_2.txt",
+        "file_json_output": "chuong_trinh_muc_2_20261025_154505.json",
+        "timestamp": "2026-10-25 15:45:05"
+    },
+    {
+        "ten_script_tao": "chuong_trinh",
+        "ten_thu_muc": "muc_3",
+        "file_nguon": "/home/runner/work/tu-dong-gui-thong-bao/tu-dong-gui-thong-bao/muc_3/bang_3.txt",
+        "file_json_output": "chuong_trinh_muc_3_20261025_154505.json",
+        "timestamp": "2026-10-25 15:45:05"
+    },
+    {
+        "ten_script_tao": "chuong_trinh",
+        "ten_thu_muc": "muc_4",
+        "file_nguon": "/home/runner/work/tu-dong-gui-thong-bao/tu-dong-gui-thong-bao/muc_4/bang_4.txt",
+        "file_json_output": "chuong_trinh_muc_4_20261025_154505.json",
+        "timestamp": "2026-10-25 15:45:05"
+    },
+    {
+        "ten_script_tao": "chuong_trinh",
+        "ten_thu_muc": "muc_5",
+        "file_nguon": "/home/runner/work/tu-dong-gui-thong-bao/tu-dong-gui-thong-bao/muc_5/bang_5.txt",
+        "file_json_output": "chuong_trinh_muc_5_20261025_154505.json",
+        "timestamp": "2026-10-25 15:45:05"
+    },
+    {
+        "ten_script_tao": "chuong_trinh",
+        "ten_thu_muc": "muc_6",
+        "file_nguon": "/home/runner/work/tu-dong-gui-thong-bao/tu-dong-gui-thong-bao/muc_6/bang_6.txt",
+        "file_json_output": "chuong_trinh_muc_6_20261025_154505.json",
+        "timestamp": "2026-10-25 15:45:05"
     }
 ]
