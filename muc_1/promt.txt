@@ -1,0 +1,15 @@
+bổ sung 
+"Tôi có 2 script: Script A (sinh file JSON) và Script B (đọc file JSON quản lý video). Hãy cập nhật Script A sao cho tệp JSON đầu ra ngoài các dữ liệu tính toán riêng của nó, bắt buộc phải bổ sung thêm các khóa chuẩn mà Script B đang đọc gồm: people, ref_numbers, và custom_tabs (có chứa danh sách links), đồng thời giữ lại khối metadata với trường timestamp theo định dạng YYYY-MM-DD HH:MM:SS để Script B có thể lọc theo ngày hiện tại và lùi/tiến 7 ngày."
+
+lấy của mỗi người
+tổng số năm (năm hiện tại trừ năm sinh ) lấy nguyên và lấy dư , 
+quý (số ngày ngày tháng năm hiện tại trừ ngày tháng năm sinh) chia 90 lấy nguyên và lấy dư nếu lớn hơn 1000 thì lấy dư tiếp tục cả 2 kết quả , 
+tháng (số ngày ngày tháng năm hiện tại trừ ngày tháng năm sinh) chia 30 lấy nguyên và lấy dư nếu lớn hơn 1000 thì lấy dư tiếp tục cả 2 kết quả , 
+tuần (số ngày ngày tháng năm hiện tại trừ ngày tháng năm sinh) chia 7 lấy nguyên và lấy dư nếu lớn hơn 1000 thì lấy dư tiếp tục cả 2 kết quả , 
+giờ (số ngày ngày tháng năm hiện tại trừ ngày tháng năm sinh nhân 24) chia cho 1000 thì lấy dư  kết quả , 
+phút (số ngày ngày tháng năm hiện tại trừ ngày tháng năm sinh nhân 24 nhân 60) chia cho 1000 thì lấy dư kết quả
+
+lấy các kết quả nguyên và dư của từng người chia cho các số thứ tự cột 1 trong bảng tab_2 
+
+
+
