@@ -11,11 +11,11 @@ from tkinter import filedialog, messagebox, ttk
 SCRIPT_NAME = os.path.splitext(os.path.basename(__file__))[0]
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Thư mục chuẩn lưu kết quả JSON và tệp nhật ký trên Google Drive
-THU_MUC_MAC_DINH = r"G:\My Drive\DANHSACHPHATVIDEO\KET_QUA_JSON"
+# 🎯 Chuyển đường dẫn ổ G sang đường dẫn tương đối trên mây GitHub
+THU_MUC_MAC_DINH = os.path.join(BASE_DIR, "KET_QUA_JSON")
 CONFIG_FILE = os.path.join(BASE_DIR, f"config_{SCRIPT_NAME}.json")
 DAYS_TO_KEEP = 7
-THU_MUC_NGUON_CHUAN = r"G:\My Drive\QL6TEP"
+THU_MUC_NGUON_CHUAN = os.path.join(BASE_DIR, "QL6TEP")
 
 
 class QuanLyVaGieuPhoiFullApp:
@@ -320,7 +320,7 @@ class QuanLyVaGieuPhoiFullApp:
                 pass
 
     def thuc_thi_cac_chuong_trinh_con(self, thu_muc_luu):
-        """Quét các thư mục con trong G:\\My Drive\\QL6TEP và gọi chạy các tệp chương trình con qua subprocess."""
+        """Quét các thư mục con trong QL6TEP và gọi chạy các tệp chương trình con."""
         if not os.path.exists(THU_MUC_NGUON_CHUAN):
             print(f"Không tìm thấy thư mục nguồn tệp con: {THU_MUC_NGUON_CHUAN}")
             return 0, [], []
@@ -359,7 +359,8 @@ class QuanLyVaGieuPhoiFullApp:
                                 startupinfo.wShowWindow = 0
                                 creationflags = subprocess.CREATE_NO_WINDOW
 
-                            cmd = ["python", duong_dan_file, "--outDir", r"G:\My Drive\DANHSACHPHATVIDEO\KET_QUA_JSON"]
+                            # 🎯 Sử dụng đường dẫn thư mục mây KET_QUA_JSON
+                            cmd = ["python", duong_dan_file, "--outDir", THU_MUC_MAC_DINH]
                             
                             process = subprocess.Popen(
                                 cmd,
