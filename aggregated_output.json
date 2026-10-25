@@ -1,7 +1,217 @@
 {
-  "thoi_gian_chay": "2026-10-25 15:45:05",
-  "tong_so_muc": 168,
+  "thoi_gian_chay": "2026-10-25 20:32:12",
+  "tong_so_muc": 210,
   "chi_tiet": [
+    {
+      "name": "NGUYỄN KHẮC NĂNG",
+      "dob": "4/6/1944",
+      "time": "11"
+    },
+    {
+      "name": "TÔ THỊ HÀ",
+      "dob": "29/8/1948",
+      "time": "10"
+    },
+    {
+      "name": "NGUYỄN MINH NAM",
+      "dob": "3/3/1971",
+      "time": "21"
+    },
+    {
+      "name": "THÂN THỊ KIM ANH",
+      "dob": "23/9/1981",
+      "time": "9"
+    },
+    {
+      "name": "NGUYỄN TÔ NGÂN AN",
+      "dob": "28/9/2014",
+      "time": "20"
+    },
+    {
+      "name": "NGUYỄN TÔ MINH CHÂU",
+      "dob": "25/7/2016",
+      "time": "21"
+    },
+    {
+      "name": "NGUYỄN TÔ BÍCH NGỌC",
+      "dob": "5/2/2020",
+      "time": "22"
+    },
+    {
+      "name": "NGUYỄN KHẮC NĂNG",
+      "dob": "4/6/1944",
+      "time": "11"
+    },
+    {
+      "name": "TÔ THỊ HÀ",
+      "dob": "29/8/1948",
+      "time": "10"
+    },
+    {
+      "name": "NGUYỄN MINH NAM",
+      "dob": "3/3/1971",
+      "time": "21"
+    },
+    {
+      "name": "THÂN THỊ KIM ANH",
+      "dob": "23/9/1981",
+      "time": "9"
+    },
+    {
+      "name": "NGUYỄN TÔ NGÂN AN",
+      "dob": "28/9/2014",
+      "time": "20"
+    },
+    {
+      "name": "NGUYỄN TÔ MINH CHÂU",
+      "dob": "25/7/2016",
+      "time": "21"
+    },
+    {
+      "name": "NGUYỄN TÔ BÍCH NGỌC",
+      "dob": "5/2/2020",
+      "time": "22"
+    },
+    {
+      "name": "NGUYỄN KHẮC NĂNG",
+      "dob": "4/6/1944",
+      "time": "11"
+    },
+    {
+      "name": "TÔ THỊ HÀ",
+      "dob": "29/8/1948",
+      "time": "10"
+    },
+    {
+      "name": "NGUYỄN MINH NAM",
+      "dob": "3/3/1971",
+      "time": "21"
+    },
+    {
+      "name": "THÂN THỊ KIM ANH",
+      "dob": "23/9/1981",
+      "time": "9"
+    },
+    {
+      "name": "NGUYỄN TÔ NGÂN AN",
+      "dob": "28/9/2014",
+      "time": "20"
+    },
+    {
+      "name": "NGUYỄN TÔ MINH CHÂU",
+      "dob": "25/7/2016",
+      "time": "21"
+    },
+    {
+      "name": "NGUYỄN TÔ BÍCH NGỌC",
+      "dob": "5/2/2020",
+      "time": "22"
+    },
+    {
+      "name": "NGUYỄN KHẮC NĂNG",
+      "dob": "4/6/1944",
+      "time": "11"
+    },
+    {
+      "name": "TÔ THỊ HÀ",
+      "dob": "29/8/1948",
+      "time": "10"
+    },
+    {
+      "name": "NGUYỄN MINH NAM",
+      "dob": "3/3/1971",
+      "time": "21"
+    },
+    {
+      "name": "THÂN THỊ KIM ANH",
+      "dob": "23/9/1981",
+      "time": "9"
+    },
+    {
+      "name": "NGUYỄN TÔ NGÂN AN",
+      "dob": "28/9/2014",
+      "time": "20"
+    },
+    {
+      "name": "NGUYỄN TÔ MINH CHÂU",
+      "dob": "25/7/2016",
+      "time": "21"
+    },
+    {
+      "name": "NGUYỄN TÔ BÍCH NGỌC",
+      "dob": "5/2/2020",
+      "time": "22"
+    },
+    {
+      "name": "NGUYỄN KHẮC NĂNG",
+      "dob": "4/6/1944",
+      "time": "11"
+    },
+    {
+      "name": "TÔ THỊ HÀ",
+      "dob": "29/8/1948",
+      "time": "10"
+    },
+    {
+      "name": "NGUYỄN MINH NAM",
+      "dob": "3/3/1971",
+      "time": "21"
+    },
+    {
+      "name": "THÂN THỊ KIM ANH",
+      "dob": "23/9/1981",
+      "time": "9"
+    },
+    {
+      "name": "NGUYỄN TÔ NGÂN AN",
+      "dob": "28/9/2014",
+      "time": "20"
+    },
+    {
+      "name": "NGUYỄN TÔ MINH CHÂU",
+      "dob": "25/7/2016",
+      "time": "21"
+    },
+    {
+      "name": "NGUYỄN TÔ BÍCH NGỌC",
+      "dob": "5/2/2020",
+      "time": "22"
+    },
+    {
+      "name": "NGUYỄN KHẮC NĂNG",
+      "dob": "4/6/1944",
+      "time": "11"
+    },
+    {
+      "name": "TÔ THỊ HÀ",
+      "dob": "29/8/1948",
+      "time": "10"
+    },
+    {
+      "name": "NGUYỄN MINH NAM",
+      "dob": "3/3/1971",
+      "time": "21"
+    },
+    {
+      "name": "THÂN THỊ KIM ANH",
+      "dob": "23/9/1981",
+      "time": "9"
+    },
+    {
+      "name": "NGUYỄN TÔ NGÂN AN",
+      "dob": "28/9/2014",
+      "time": "20"
+    },
+    {
+      "name": "NGUYỄN TÔ MINH CHÂU",
+      "dob": "25/7/2016",
+      "time": "21"
+    },
+    {
+      "name": "NGUYỄN TÔ BÍCH NGỌC",
+      "dob": "5/2/2020",
+      "time": "22"
+    },
     {
       "name": "NGUYỄN KHẮC NĂNG",
       "dob": "4/6/1944",
@@ -845,6 +1055,216 @@
   ],
   "data": {
     "thong_ke_tab4": [
+      {
+        "name": "NGUYỄN KHẮC NĂNG",
+        "dob": "4/6/1944",
+        "time": "11"
+      },
+      {
+        "name": "TÔ THỊ HÀ",
+        "dob": "29/8/1948",
+        "time": "10"
+      },
+      {
+        "name": "NGUYỄN MINH NAM",
+        "dob": "3/3/1971",
+        "time": "21"
+      },
+      {
+        "name": "THÂN THỊ KIM ANH",
+        "dob": "23/9/1981",
+        "time": "9"
+      },
+      {
+        "name": "NGUYỄN TÔ NGÂN AN",
+        "dob": "28/9/2014",
+        "time": "20"
+      },
+      {
+        "name": "NGUYỄN TÔ MINH CHÂU",
+        "dob": "25/7/2016",
+        "time": "21"
+      },
+      {
+        "name": "NGUYỄN TÔ BÍCH NGỌC",
+        "dob": "5/2/2020",
+        "time": "22"
+      },
+      {
+        "name": "NGUYỄN KHẮC NĂNG",
+        "dob": "4/6/1944",
+        "time": "11"
+      },
+      {
+        "name": "TÔ THỊ HÀ",
+        "dob": "29/8/1948",
+        "time": "10"
+      },
+      {
+        "name": "NGUYỄN MINH NAM",
+        "dob": "3/3/1971",
+        "time": "21"
+      },
+      {
+        "name": "THÂN THỊ KIM ANH",
+        "dob": "23/9/1981",
+        "time": "9"
+      },
+      {
+        "name": "NGUYỄN TÔ NGÂN AN",
+        "dob": "28/9/2014",
+        "time": "20"
+      },
+      {
+        "name": "NGUYỄN TÔ MINH CHÂU",
+        "dob": "25/7/2016",
+        "time": "21"
+      },
+      {
+        "name": "NGUYỄN TÔ BÍCH NGỌC",
+        "dob": "5/2/2020",
+        "time": "22"
+      },
+      {
+        "name": "NGUYỄN KHẮC NĂNG",
+        "dob": "4/6/1944",
+        "time": "11"
+      },
+      {
+        "name": "TÔ THỊ HÀ",
+        "dob": "29/8/1948",
+        "time": "10"
+      },
+      {
+        "name": "NGUYỄN MINH NAM",
+        "dob": "3/3/1971",
+        "time": "21"
+      },
+      {
+        "name": "THÂN THỊ KIM ANH",
+        "dob": "23/9/1981",
+        "time": "9"
+      },
+      {
+        "name": "NGUYỄN TÔ NGÂN AN",
+        "dob": "28/9/2014",
+        "time": "20"
+      },
+      {
+        "name": "NGUYỄN TÔ MINH CHÂU",
+        "dob": "25/7/2016",
+        "time": "21"
+      },
+      {
+        "name": "NGUYỄN TÔ BÍCH NGỌC",
+        "dob": "5/2/2020",
+        "time": "22"
+      },
+      {
+        "name": "NGUYỄN KHẮC NĂNG",
+        "dob": "4/6/1944",
+        "time": "11"
+      },
+      {
+        "name": "TÔ THỊ HÀ",
+        "dob": "29/8/1948",
+        "time": "10"
+      },
+      {
+        "name": "NGUYỄN MINH NAM",
+        "dob": "3/3/1971",
+        "time": "21"
+      },
+      {
+        "name": "THÂN THỊ KIM ANH",
+        "dob": "23/9/1981",
+        "time": "9"
+      },
+      {
+        "name": "NGUYỄN TÔ NGÂN AN",
+        "dob": "28/9/2014",
+        "time": "20"
+      },
+      {
+        "name": "NGUYỄN TÔ MINH CHÂU",
+        "dob": "25/7/2016",
+        "time": "21"
+      },
+      {
+        "name": "NGUYỄN TÔ BÍCH NGỌC",
+        "dob": "5/2/2020",
+        "time": "22"
+      },
+      {
+        "name": "NGUYỄN KHẮC NĂNG",
+        "dob": "4/6/1944",
+        "time": "11"
+      },
+      {
+        "name": "TÔ THỊ HÀ",
+        "dob": "29/8/1948",
+        "time": "10"
+      },
+      {
+        "name": "NGUYỄN MINH NAM",
+        "dob": "3/3/1971",
+        "time": "21"
+      },
+      {
+        "name": "THÂN THỊ KIM ANH",
+        "dob": "23/9/1981",
+        "time": "9"
+      },
+      {
+        "name": "NGUYỄN TÔ NGÂN AN",
+        "dob": "28/9/2014",
+        "time": "20"
+      },
+      {
+        "name": "NGUYỄN TÔ MINH CHÂU",
+        "dob": "25/7/2016",
+        "time": "21"
+      },
+      {
+        "name": "NGUYỄN TÔ BÍCH NGỌC",
+        "dob": "5/2/2020",
+        "time": "22"
+      },
+      {
+        "name": "NGUYỄN KHẮC NĂNG",
+        "dob": "4/6/1944",
+        "time": "11"
+      },
+      {
+        "name": "TÔ THỊ HÀ",
+        "dob": "29/8/1948",
+        "time": "10"
+      },
+      {
+        "name": "NGUYỄN MINH NAM",
+        "dob": "3/3/1971",
+        "time": "21"
+      },
+      {
+        "name": "THÂN THỊ KIM ANH",
+        "dob": "23/9/1981",
+        "time": "9"
+      },
+      {
+        "name": "NGUYỄN TÔ NGÂN AN",
+        "dob": "28/9/2014",
+        "time": "20"
+      },
+      {
+        "name": "NGUYỄN TÔ MINH CHÂU",
+        "dob": "25/7/2016",
+        "time": "21"
+      },
+      {
+        "name": "NGUYỄN TÔ BÍCH NGỌC",
+        "dob": "5/2/2020",
+        "time": "22"
+      },
       {
         "name": "NGUYỄN KHẮC NĂNG",
         "dob": "4/6/1944",
