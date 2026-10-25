@@ -8,34 +8,49 @@ file_output = "aggregated_output.json"
 
 def tong_hop_du_lieu():
     now = datetime.now()
-    bay_ngay_truoc = now - timedelta(days=7)
     danh_sach_ket_qua = []
 
     if os.path.exists(thu_muc_json):
         danh_sach_file = glob.glob(os.path.join(thu_muc_json, "*.json"))
         for file_path in danh_sach_file:
+            # Bỏ qua các tệp index quản lý cấu hình
+            if "index" in file_path.lower():
+                continue
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     data = json.load(f)
-                    items = data if isinstance(data, list) else (data.get('chi_tiet') or data.get('danh_sach') or [data])
                     
+                    # Trích xuất toàn bộ dữ liệu bên trong tệp JSON một cách linh hoạt nhất
+                    items = []
+                    if isinstance(data, list):
+                        items = data
+                    elif isinstance(data, dict):
+                        # Lấy tất cả các danh sách hoặc đối tượng bên trong tệp JSON
+                        items.append(data)
+                        for key, val in data.items():
+                            if isinstance(val, list):
+                                items.extend(val)
+                            elif isinstance(val, dict):
+                                items.append(val)
+
                     for item in items:
-                        time_str = item.get('thoi_gian') or item.get('ngay_gio') or item.get('time')
-                        if not time_str:
+                        if not isinstance(item, dict):
                             continue
-                        try:
-                            item_time = datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S")
-                        except:
-                            try:
-                                item_time = datetime.strptime(time_str, "%Y-%m-%d %H:%M")
-                            except:
-                                continue
                         
-                        # Bộ lọc thời gian chuẩn
-                        if bay_ngay_truoc <= item_time <= now:
-                            if item_time.date() == now.date() and item_time < now:
-                                continue
-                            danh_sach_ket_qua.append(item)
+                        # Gán nhãn tên nguồn tệp để dễ theo dõi trên web
+                        if 'nguon_goc' not in item:
+                            item['nguon_goc'] = os.path.basename(file_path)
+                            
+                        # Chuẩn hóa trường thời gian bắt buộc để web hiển thị
+                        if not any(k in item for k in ['thoi_gian', 'ngay_gio', 'time', 'timestamp']):
+                            item['thoi_gian'] = now.strftime("%Y-%m-%d %H:%M:%S")
+                        else:
+                            # Đưa về khóa chung 'thoi_gian'
+                            t_val = item.get('thoi_gian') or item.get('ngay_gio') or item.get('time') or item.get('timestamp')
+                            item['thoi_gian'] = str(t_val)
+
+                        danh_sach_ket_qua.append(item)
+
             except Exception as e:
                 print(f"Lỗi đọc file {file_path}: {e}")
 
