@@ -1,30 +1,42 @@
 import os
-import sys
+import glob
 import json
-import requests
+import datetime
 
 def main():
-    print("=== BẮT ĐẦU CHẠY TIẾN TRÌNH TỰ ĐỘNG ===")
+    print("=== BẮT ĐẦU QUÉT VÀ TẠO BÁO CÁO JSON ===")
     
-    # Cấu hình timeout tối đa 30 giây cho mỗi kết nối mạng để tránh treo vô hạn
-    HTTP_TIMEOUT = 30 
+    # Thư mục chứa các tệp JSON kết quả trong repository
+    # (Anh có thể tạo thư mục 'ket_qua_json' trên repo hoặc lưu trực tiếp ở thư mục gốc)
+    output_dir = "." # Hoặc đường dẫn thư mục chứa JSON trên repo của anh
     
-    try:
-        # Ví dụ kết nối hoặc tải dữ liệu từ Drive/API
-        # Luôn có timeout=HTTP_TIMEOUT để mạng đơ là tự bỏ qua
-        print("Đang đồng bộ dữ liệu...")
+    # Tìm tất cả các file .json trong thư mục
+    json_files = glob.glob(os.path.join(output_dir, "*.json"))
+    
+    aggregated_data = []
+    
+    for file_path in json_files:
+        # Bỏ qua file cấu hình hoặc file output tổng nếu có
+        if "aggregated_output.json" in file_path:
+            continue
+            
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                aggregated_data.append({
+                    "file_name": os.path.basename(file_path),
+                    "content": data,
+                    "updated_at": str(datetime.datetime.now())
+                })
+        except Exception as e:
+            print(f"Lỗi khi đọc file {file_path}: {e}")
+            
+    # Ghi gộp dữ liệu thành file aggregated_output.json để trang web index.html hiển thị
+    final_output_path = "aggregated_output.json"
+    with open(final_output_path, 'w', encoding='utf-8') as f:
+        json.dump(aggregated_data, f, ensure_ascii=False, indent=4)
         
-        # Code xử lý chính của anh sẽ chạy ở đây
-        # Mọi kết nối mạng trong script đều được kiểm soát thời gian
-        
-        print("=== HOÀN THÀNH TIẾN TRÌNH THÀNH CÔNG ===")
-        
-    except requests.exceptions.Timeout:
-        print("LỖI: Mạng quá chậm hoặc Google Drive không phản hồi (Timeout). Tự động ngắt để tránh kẹt ca!")
-        sys.exit(0) # Thoát an toàn
-    except Exception as e:
-        print(f"LỖI KHÔNG MONG MUỐN: {e}")
-        sys.exit(0)
+    print(f"=== ĐÃ TẠO XONG BÁO CÁO: Tổng hợp {len(json_files)} tệp JSON ===")
 
 if __name__ == "__main__":
     main()
