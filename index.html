@@ -2,35 +2,115 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Báo Cáo Tự Động</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo Cáo Giờ Phát & Dữ Liệu Tự Động</title>
     <style>
-        body { background-color: #121212; color: #e0e0e0; font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-        .card { background: #1e1e1e; border: 1px solid #333; padding: 20px; border-radius: 8px; max-width: 600px; margin: 0 auto; text-align: left; }
+        body { 
+            background-color: #121212; 
+            color: #e0e0e0; 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            padding: 15px; 
+            margin: 0;
+        }
+        h1 { font-size: 1.4rem; color: #00bcd4; }
+        .card { 
+            background: #1e1e1e; 
+            border: 1px solid #333; 
+            padding: 15px; 
+            border-radius: 8px; 
+            max-width: 100%; 
+            margin: 10px auto; 
+            text-align: left; 
+            box-sizing: border-box;
+        }
         .success { color: #4caf50; font-weight: bold; }
-        button { background: #00bcd4; color: #000; border: none; padding: 10px 20px; font-weight: bold; border-radius: 5px; cursor: pointer; margin-bottom: 20px; }
+        button { 
+            background: #00bcd4; 
+            color: #000; 
+            border: none; 
+            padding: 12px 20px; 
+            font-weight: bold; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            margin-bottom: 15px; 
+            font-size: 1rem;
+        }
+        pre { 
+            background: #2d2d2d; 
+            padding: 10px; 
+            border-radius: 5px; 
+            overflow-x: auto; 
+            font-size: 0.85rem; 
+            color: #00FFC8;
+        }
+        hr { border-color: #444; }
     </style>
 </head>
 <body>
     <h1>📊 BÁO CÁO TỰ ĐỘNG GOOGLE DRIVE</h1>
-    <button onclick="location.reload()">Làm mới dữ liệu</button>
-    <div class="card" id="content">Đang tải dữ liệu...</div>
+    <button onclick="location.reload()">🔄 Làm mới dữ liệu</button>
+    <div class="card" id="content">Đang tải dữ liệu từ hệ thống...</div>
 
     <script>
+        // Đọc tệp aggregated_output.json được đồng bộ tự động lên kho lưu trữ
         fetch('aggregated_output.json')
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Không thể tải tệp dữ liệu.");
+                }
+                return response.json();
+            })
             .then(data => {
                 const container = document.getElementById('content');
                 let html = '';
-                data.forEach(item => {
-                    html += `<h3>📌 Tệp: ${item.file_name}</h3>`;
-                    html += `<p class="success">🟢 Trạng thái: Hoạt động bình thường</p>`;
-                    html += `<pre style="background:#2d2d2d; padding:10px; border-radius:5px;">${JSON.stringify(item.content, null, 4)}</pre>`;
-                    html += `<hr style="border-color: #444;">`;
-                });
+
+                // Xử lý linh hoạt dữ liệu dạng danh sách hoặc dạng đối tượng (object) JSON
+                let items = [];
+                if (Array.isArray(data)) {
+                    items = data;
+                } else if (data && typeof data === 'object') {
+                    // Nếu dữ liệu có cấu trúc chứa metadata hoặc chi tiết tổng hợp
+                    html += `<p class="success">🟢 Trạng thái: Đồng bộ thành công</p>`;
+                    if (data.thoi_gian_chay) {
+                        html += `<p>⏱️ Thời gian cập nhật: <b>${data.thoi_gian_chay}</b></p>`;
+                    }
+                    if (data.tong_so_tep_json !== undefined) {
+                        html += `<p>📁 Tổng số tệp JSON: <b>${data.tong_so_tep_json}</b></p>`;
+                    }
+                    if (data.tong_so_link_txt !== undefined) {
+                        html += `<p>🔗 Tổng số Link TXT: <b>${data.tong_so_link_txt}</b></p>`;
+                    }
+                    html += `<hr>`;
+                    
+                    // Lấy các mảng con nếu có để hiển thị
+                    items = data.chi_tiet || data.danh_sach_link_da_danh_so || data.ket_qua_tong_ket || [];
+                }
+
+                if (items.length > 0) {
+                    items.forEach((item, index) => {
+                        html += `<h3>📌 Mục #${index + 1}</h3>`;
+                        html += `<pre>${JSON.stringify(item, null, 2)}</pre>`;
+                        html += `<hr>`;
+                    });
+                } else if (Array.isArray(data) === false && Object.keys(data).length > 0) {
+                    html += `<h3>📦 Chi tiết cấu trúc dữ liệu:</h3>`;
+                    html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    html += `<p>Không có nội dung hiển thị trong tệp JSON.</p>`;
+                }
+
                 container.innerHTML = html;
             })
             .catch(err => {
-                document.getElementById('content').innerHTML = '<span style="color:red">Lỗi tải dữ liệu JSON!</span>';
+                document.getElementById('content').innerHTML = `
+                    <span style="color:red; font-weight:bold;">⚠️ Chưa tìm thấy hoặc lỗi đọc tệp 'aggregated_output.json'!</span><br><br>
+                    <p style="font-size: 0.9rem; color: #ccc;">Nguyên nhân có thể do:</p>
+                    <ul style="font-size: 0.85rem; color: #ccc; text-align: left;">
+                        <li>GitHub Actions chưa chạy xong lượt đẩy tệp JSON đầu tiên lên web.</li>
+                        <li>Tên tệp JSON trên thư mục gốc của kho lưu trữ khác với 'aggregated_output.json'.</li>
+                    </ul>
+                `;
             });
     </script>
 </body>
