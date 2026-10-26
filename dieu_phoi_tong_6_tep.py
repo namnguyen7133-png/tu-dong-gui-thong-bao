@@ -306,12 +306,10 @@ class QuanLyVaGieuPhoiFullApp:
 
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1].lower() == "--gui":
+        # Chỉ khi nào có tham số --gui mới bật giao diện Tkinter trên máy tính
         root = tk.Tk()
         app = QuanLyVaGieuPhoiFullApp(root, headless=False)
         root.mainloop()
     else:
-        # QUY TẮC 4: Chạy ngầm hoàn toàn không hiện GUI khi gọi trực tiếp từ GitHub Actions
-        root_ao = tk.Tk()
-        root_ao.withdraw()
-        QuanLyVaGieuPhoiFullApp(root_ao, headless=True)
-        root_ao.destroy()
+        # Khi chạy ngầm trên GitHub Actions, tuyệt đối KHÔNG gọi tk.Tk() để tránh lỗi không có màn hình
+        QuanLyVaGieuPhoiFullApp(None, headless=True)
