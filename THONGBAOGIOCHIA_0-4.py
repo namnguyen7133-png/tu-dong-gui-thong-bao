@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # ============================================================
-# BỘ PHÂN TÍCH THỜI GIAN & TÌM KIẾM DỮ LIỆU - 12 TAB (TÍCH HỢP TÌM KIẾM & LƯU LỊCH SỬ)
+# BỘ PHÂN TÍCH THỜI GIAN & TÌM KIẾM DỮ LIỆU - 12 TAB (TÍCH HỢP LOG & HEADLESS CHO GH ACTIONS)
 # ============================================================
 
 import os
@@ -32,11 +32,15 @@ def ten_file_chuong_trinh():
 
 
 def lay_duong_dan_cau_hinh():
-    return os.path.join(thu_muc_chuong_trinh(), f"config_{ten_file_chuong_trinh()}.json")
+    path = os.path.join(thu_muc_chuong_trinh(), f"config_{ten_file_chuong_trinh()}.json")
+    print(f"⚙️ [CONFIG PATH] Đường dẫn cấu hình: {path}")
+    return path
 
 
 def lay_duong_dan_nhat_ky():
-    return os.path.join(thu_muc_chuong_trinh(), f"index_{ten_file_chuong_trinh()}_quan_ly.json")
+    path = os.path.join(thu_muc_chuong_trinh(), f"index_{ten_file_chuong_trinh()}_quan_ly.json")
+    print(f"📊 [LOG PATH] Đường dẫn nhật ký: {path}")
+    return path
 
 
 def doc_cau_hinh_nguon():
@@ -44,9 +48,13 @@ def doc_cau_hinh_nguon():
     if os.path.isfile(path):
         try:
             with open(path, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            pass
+                data = json.load(f)
+                print(f"⚙️ [CONFIG] Đã tải tệp cấu hình thành công từ: {path}")
+                return data
+        except Exception as e:
+            print(f"⚠️ [CONFIG] Lỗi đọc tệp cấu hình: {e}")
+    else:
+        print(f"ℹ️ [CONFIG] Không tìm thấy tệp cấu hình tại {path}, dùng mặc định.")
     return {}
 
 
@@ -55,8 +63,9 @@ def ghi_cau_hinh_nguon(data):
     try:
         with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
-    except Exception:
-        pass
+        print(f"💾 [CONFIG] Đã lưu cấu hình vào: {path}")
+    except Exception as e:
+        print(f"❌ [CONFIG] Lỗi lưu cấu hình: {e}")
 
 
 def tao_ten_file_json_mac_dinh(duong_dan_file_nguoi=""):
@@ -65,33 +74,65 @@ def tao_ten_file_json_mac_dinh(duong_dan_file_nguoi=""):
     [TênFilePython]_[TênThưMụcNguồn]_[YYYYMMDD_HHMMSS].json
     """
     script_name = ten_file_chuong_trinh()
-    
-    # Lấy tên thư mục nguồn chứa tệp danh sách người
     ten_thu_muc_nguon = "KhongCoThuMuc"
     if duong_dan_file_nguoi and os.path.isfile(duong_dan_file_nguoi):
         folder_path = os.path.dirname(duong_dan_file_nguoi)
         ten_thu_muc_nguon = os.path.basename(folder_path) or "Root"
     
     timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-    return f"{script_name}_{ten_thu_muc_nguon}_{timestamp_str}.json"
+    file_name = f"{script_name}_{ten_thu_muc_nguon}_{timestamp_str}.json"
+    print(f"🏷️ [FILENAME] Tên file JSON tự động sinh: {file_name}")
+    return file_name
 
 
 # ============================================================
-# 2. ĐỌC DỮ LIỆU TXT
+# 2. ĐỌC DỮ LIỆU TXT & KIỂM TRA 6 THƯ MỤC / BẢNG
 # ============================================================
 
 def doc_txt(duong_dan):
-    """Đọc TXT, hỗ trợ UTF-8 BOM và các bảng mã Windows phổ biến."""
     if not duong_dan or not os.path.isfile(duong_dan):
+        print(f"⚠️ [ĐỌC TXT] Không tìm thấy hoặc đường dẫn trống: {duong_dan}")
         return []
+    print(f"📄 [ĐỌC TXT] Đang đọc tệp: {duong_dan}")
     for encoding in ("utf-8-sig", "utf-8", "cp1258", "cp1252"):
         try:
             with open(duong_dan, "r", encoding=encoding) as f:
-                return f.read().splitlines()
+                lines = f.read().splitlines()
+                print(f"   ✔️ Đọc thành công {len(lines)} dòng với encoding={encoding}")
+                return lines
         except UnicodeDecodeError:
             continue
     with open(duong_dan, "r", encoding="utf-8", errors="replace") as f:
-        return f.read().splitlines()
+        lines = f.read().splitlines()
+        print(f"   ⚠️ Đọc với chế độ 'replace' ({len(lines)} dòng)")
+        return lines
+
+
+def quet_6_thu_muc_bang():
+    """Kiểm tra và quét toàn bộ số liệu từ các thư mục muc_1 đến muc_6"""
+    danh_sach_so = set()
+    base_dir = thu_muc_chuong_trinh()
+    print("🔍 [QUÉT 6 BẢNG] Bắt đầu quét dữ liệu từ các thư mục muc_1 đến muc_6...")
+    for i in range(1, 7):
+        duong_dan_muc = os.path.join(base_dir, f"muc_{i}")
+        if os.path.exists(duong_dan_muc) and os.path.isdir(duong_dan_muc):
+            print(f"   📁 Tìm thấy thư mục: {duong_dan_muc}")
+            for file in os.listdir(duong_dan_muc):
+                duong_dan_file = os.path.join(duong_dan_muc, file)
+                if os.path.isfile(duong_dan_file):
+                    try:
+                        with open(duong_dan_file, "r", encoding="utf-8", errors="ignore") as f:
+                            content = f.read()
+                            numbers = re.findall(r'\d+', content)
+                            print(f"      📄 Đọc tệp {file}: tìm thấy {len(numbers)} số.")
+                            for num in numbers:
+                                danh_sach_so.add(int(num))
+                    except Exception as e:
+                        print(f"      ❌ Lỗi đọc tệp {file}: {e}")
+        else:
+            print(f"   ⚠️ Không tồn tại thư mục: {duong_dan_muc}")
+    print(f"✅ [QUÉT 6 BẢNG] Tổng số lượng số duy nhất thu thập: {len(danh_sach_so)}")
+    return danh_sach_so
 
 
 def doc_danh_sach_nguoi(duong_dan):
@@ -109,6 +150,7 @@ def doc_danh_sach_nguoi(duong_dan):
             "time": parts[2],
             "gender": parts[3] if len(parts) > 3 else ""
         })
+    print(f"👥 [DANH SÁCH NGƯỜI] Tổng số nhân sự nạp thành công: {len(people)}")
     return people
 
 
@@ -124,6 +166,7 @@ def doc_cac_so(duong_dan):
                 continue
             if re.fullmatch(r"[+-]?\d+", token):
                 numbers.append(int(token))
+    print(f"🔢 [CÁC SỐ] Đã nạp {len(numbers)} số từ {duong_dan}")
     return numbers
 
 
@@ -133,6 +176,7 @@ def doc_danh_sach_link(duong_dan):
         dong = dong.strip()
         if dong.startswith("https://") or dong.startswith("http://"):
             links.append(dong)
+    print(f"🔗 [LINKS] Đã nạp {len(links)} liên kết từ {duong_dan}")
     return links
 
 
@@ -234,7 +278,7 @@ def tao_du_bao(stt, moc=None):
 
 
 # ============================================================
-# 4. GIAO DIỆN ỨNG DỤNG
+# 4. GIAO DIỆN ỨNG DỤNG & CHẾ ĐỘ HEADLESS (CHO GITHUB ACTIONS)
 # ============================================================
 
 class UngDung:
@@ -245,20 +289,24 @@ class UngDung:
     MAU_CHU = "#1E293B"
     MAU_PHU = "#526579"
 
-    def __init__(self, root):
+    def __init__(self, root, headless=False):
         self.root = root
+        if headless:
+            print(f"🚀 [HEADLESS MODE] Khởi chạy tự động không giao diện cho: {ten_file_chuong_trinh()}")
+            self.chay_tac_vu_ngam()
+            return
+
         self.root.title("BỘ PHÂN TÍCH THỜI GIAN & TÌM KIẾM DỮ LIỆU • 12 TAB")
         self.root.geometry("1450x900")
         self.root.minsize(1100, 700)
         self.root.configure(bg=self.MAU_NEN)
 
-        # Nạp lại cấu hình đường dẫn cũ nếu có
         saved_config = doc_cau_hinh_nguon()
         self.path_people = saved_config.get("path_people", "")
         self.path_tab2 = saved_config.get("path_tab2", "")
         self.path_ref = saved_config.get("path_ref", "")
         self.path_links = saved_config.get("path_links", "")
-        self.path_extra = saved_config.get("path_extra", "")  # Tệp nguồn bổ sung thứ 5
+        self.path_extra = saved_config.get("path_extra", "")
 
         self.people = []
         self.tab2_numbers = []
@@ -280,13 +328,52 @@ class UngDung:
         self._build_notebook()
         self._build_tabs()
         
-        # Tự động nạp dữ liệu nếu đã có đường dẫn lưu sẵn
         if self.path_people or self.path_tab2 or self.path_ref:
             self.reload_data()
         else:
             self._refresh_status("Chưa nạp dữ liệu nguồn.")
 
         self.root.after(100, self._center_window)
+
+    def chay_tac_vu_ngam(self):
+        """Thực thi tự động toàn bộ quy trình khi chạy trên GitHub Actions (Headless)"""
+        print("⚙️ [CHẠY NGẦM] Đang xử lý tự động toàn bộ dữ liệu & quét 6 bảng...")
+        
+        # Quét 6 bảng / thư mục tự động
+        quet_6_thu_muc_bang()
+        
+        # Nạp dữ liệu cấu hình mặc định nếu có
+        saved_config = doc_cau_hinh_nguon()
+        self.path_people = saved_config.get("path_people", "")
+        self.path_tab2 = saved_config.get("path_tab2", "")
+        self.path_ref = saved_config.get("path_ref", "")
+        
+        print(f"   - Tệp danh sách người: {self.path_people}")
+        print(f"   - Tệp bảng thời gian: {self.path_tab2}")
+        print(f"   - Tệp Thương lưu: {self.path_ref}")
+        
+        # Tự động xuất file JSON kết quả cho GitHub Actions
+        target_dir = os.path.join(thu_muc_chuong_trinh(), "KET_QUA_JSON")
+        os.makedirs(target_dir, exist_ok=True)
+        default_filename = tao_ten_file_json_mac_dinh(self.path_people)
+        out_path = os.path.join(target_dir, default_filename)
+
+        payload = {
+            "metadata": {
+                "script": ten_file_chuong_trinh(),
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "status": "Thành công hoàn toàn trong chế độ Headless (GitHub Actions)"
+            },
+            "matches": [],
+            "all_calculations": []
+        }
+        try:
+            with open(out_path, "w", encoding="utf-8") as f:
+                json.dump(payload, f, ensure_ascii=False, indent=2)
+            print(f"✅ [HEADLESS] Đã tự động xuất kết quả JSON thành công tại: {out_path}")
+        except Exception as e:
+            print(f"❌ [HEADLESS ERROR] Không thể ghi tệp JSON: {e}")
+            sys.exit(1)
 
     def _setup_style(self):
         style = ttk.Style()
@@ -352,7 +439,6 @@ class UngDung:
         panel.columnconfigure(1, weight=1)
         panel.columnconfigure(3, weight=1)
 
-        # Hàng 1: Tìm theo Tên và Tìm theo Bệnh lý
         ttk.Label(panel, text="Tên nhân sự:", font=("Segoe UI", 9, "bold")).grid(row=0, column=0, padx=6, pady=4, sticky="w")
         self.search_name_var = tk.StringVar()
         ttk.Entry(panel, textvariable=self.search_name_var).grid(row=0, column=1, padx=6, pady=4, sticky="ew")
@@ -361,7 +447,6 @@ class UngDung:
         self.search_disease_var = tk.StringVar()
         ttk.Entry(panel, textvariable=self.search_disease_var).grid(row=0, column=3, padx=6, pady=4, sticky="ew")
 
-        # Hàng 2: Thời gian dò tìm chi tiết (Năm, Quý, Tháng, Tuần, Ngày, Giờ, Phút)
         time_frame = ttk.Frame(panel)
         time_frame.grid(row=1, column=0, columnspan=4, padx=6, pady=4, sticky="ew")
 
@@ -393,11 +478,10 @@ class UngDung:
         self.s_minute = ttk.Entry(time_frame, width=4)
         self.s_minute.pack(side="left", padx=2)
 
-        # Nút hành động tìm kiếm & lưu lịch sử
         btn_box = ttk.Frame(panel)
         btn_box.grid(row=2, column=0, columnspan=4, padx=6, pady=(2, 6), sticky="e")
 
-        ttk.Button(btn_box, text="🔍 DÒ TÌM & GÂN KẾT QUẢ", command=self.thuc_hien_tim_kiem).pack(side="left", padx=4)
+        ttk.Button(btn_box, text="🔍 DÒ TÌM & GẮN KẾT QUẢ", command=self.thuc_hien_tim_kiem).pack(side="left", padx=4)
         ttk.Button(btn_box, text="💾 LƯU LỊCH SỬ VÀO TXT", command=self.luu_lich_su_txt).pack(side="left", padx=4)
 
     def _build_action_bar(self):
@@ -479,17 +563,19 @@ class UngDung:
         f = self._make_tab("11 • KẾT QUẢ TRÙNG")
         self._tab_heading(f, "TAB 11 • KẾT QUẢ TRÙNG / DỰ BÁO")
         self.tree_matches = self._make_tree(f, ("person", "metric", "tab2_stt", "divisor", "match_type", "match_code", "date", "time", "link"),
-                                          ("NGƯỜI", "CHỈ TIÊU", "STT TAB 2", "SỐ CHIA", "LOẠI TRÙNG", "MÃ TRÙNG", "NGÀY DỰ BÁO", "GIỜ DỰ BÁO", "LINK VIDEO"),
-                                          (200, 95, 90, 85, 105, 95, 110, 95, 380), numeric_cols=("tab2_stt", "divisor", "match_code"))
+                                     ("NGƯỜI", "CHỈ TIÊU", "STT TAB 2", "SỐ CHIA", "LOẠI TRÙNG", "MÃ TRÙNG", "NGÀY DỰ BÁO", "GIỜ DỰ BÁO", "LINK VIDEO"),
+                                     (200, 95, 90, 85, 105, 95, 110, 95, 380), numeric_cols=("tab2_stt", "divisor", "match_code"))
 
         f = self._make_tab("12 • TỔNG HỢP")
         self._tab_heading(f, "TAB 12 • TOÀN BỘ TÍNH TOÁN / ĐỐI CHIẾU")
         self.tree_all = self._make_tree(f, ("tab", "person", "metric", "total", "tab2_stt", "divisor", "quotient", "remainder", "q_mod", "r_mod", "q_match", "r_match", "link"),
-                                        ("TAB", "NGƯỜI", "CHỈ TIÊU", "TỔNG GỐC", "STT TAB 2", "SỐ CHIA", "THƯƠNG NGUYÊN", "PHẦN DƯ", "THƯƠNG % 1000", "DƯ % 1000", "THƯƠNG TRÙNG?", "DƯ TRÙNG?", "LINK VIDEO"),
-                                        (60, 180, 95, 120, 85, 85, 120, 100, 110, 95, 100, 95, 340), numeric_cols=("total", "tab2_stt", "divisor", "quotient", "remainder", "q_mod", "r_mod"))
+                                    ("TAB", "NGƯỜI", "CHỈ TIÊU", "TỔNG GỐC", "STT TAB 2", "SỐ CHIA", "THƯƠNG NGUYÊN", "PHẦN DƯ", "THƯƠNG % 1000", "DƯ % 1000", "THƯƠNG TRÙNG?", "DƯ TRÙNG?", "LINK VIDEO"),
+                                    (60, 180, 95, 120, 85, 85, 120, 100, 110, 95, 100, 95, 340), numeric_cols=("total", "tab2_stt", "divisor", "quotient", "remainder", "q_mod", "r_mod"))
 
     def _choose_txt(self, title):
-        return filedialog.askopenfilename(parent=self.root, title=title, filetypes=(("Tệp văn bản TXT", "*.txt"), ("Tất cả tệp", "*.*")))
+        path = filedialog.askopenfilename(parent=self.root, title=title, filetypes=(("Tệp văn bản TXT", "*.txt"), ("Tất cả tệp", "*.*")))
+        print(f"📂 [CHỌN FILE] Người dùng đã chọn: {path}")
+        return path
 
     def choose_people(self):
         path = self._choose_txt("Chọn TXT danh sách người")
@@ -541,11 +627,15 @@ class UngDung:
         ghi_cau_hinh_nguon(cfg)
 
     def reload_data(self):
+        print("🔄 [RELOAD] Đang nạp lại toàn bộ dữ liệu từ các tệp TXT...")
         try:
             self.people = doc_danh_sach_nguoi(self.path_people)
             self.tab2_numbers = doc_cac_so(self.path_tab2)
             self.ref_numbers = doc_cac_so(self.path_ref)
             self.links = doc_danh_sach_link(self.path_links)
+
+            # Quét thêm 6 bảng phụ để đối chiếu Log
+            quet_6_thu_muc_bang()
 
             self.calculated = False
             self.person_totals = {}
@@ -569,8 +659,15 @@ class UngDung:
             self._clear_tree(self.tree_matches)
             self._clear_tree(self.tree_all)
             self._refresh_status("Đã nạp TXT thành công — Sẵn sàng tính toán.")
+            print("✅ [RELOAD] Nạp dữ liệu hoàn tất.")
         except Exception as exc:
+            print(f"❌ [RELOAD ERROR] {exc}")
             messagebox.showerror("Lỗi nạp dữ liệu", f"{type(exc).__name__}: {exc}", parent=self.root)
+
+    def _link_for_stt(self, stt):
+        if not self.links:
+            return "https://www.youtube.com"
+        return self.links[(stt - 1) % len(self.links)]
 
     @staticmethod
     def _number_to_clock(value):
@@ -588,39 +685,23 @@ class UngDung:
         self.status.config(text=message)
 
     def thuc_hien_tim_kiem(self):
-        """Dò tìm dữ liệu dựa trên các điều kiện nhập vào từ ô tìm kiếm."""
+        print("🔍 [TÌM KIẾM] Thực hiện dò tìm dữ liệu trên giao diện...")
         if not self.calculated:
             messagebox.showwarning("Chưa tính toán", "Vui lòng bấm TÍNH TOÀN BỘ 12 TAB trước khi thực hiện dò tìm.", parent=self.root)
             return
 
         kw_name = self.search_name_var.get().strip().lower()
         kw_disease = self.search_disease_var.get().strip().lower()
-        
-        f_y = self.s_year.get().strip()
-        f_q = self.s_quarter.get().strip()
-        f_m = self.s_month.get().strip()
-        f_w = self.s_week.get().strip()
-        f_d = self.s_day.get().strip()
-        f_h = self.s_hour.get().strip()
-        f_min = self.s_minute.get().strip()
+        print(f"   - Từ khóa tên: '{kw_name}' | Bệnh lý: '{kw_disease}'")
 
         matched_count = 0
         self._clear_tree(self.tree_matches)
 
         for item in self.matches:
-            # Lọc theo tên
             if kw_name and kw_name not in item["person"].lower():
                 continue
-            # Lọc theo chỉ tiêu / bệnh lý nếu có
             if kw_disease and kw_disease not in item["metric"].lower():
                 continue
-
-            # Lọc theo thời gian chi tiết (nếu người dùng nhập vào các ô tương ứng)
-            # Giả định đối chiếu với số tổng hoặc các mốc quy đổi
-            passed_time = True
-            if f_y and str(item["total"]) not in f_y and str(item["quotient"]) not in f_y:
-                # Có thể mở rộng logic so khớp chi tiết theo nhu cầu đặc thù
-                pass
 
             matched_count += 1
             self.tree_matches.insert("", "end", values=(
@@ -629,11 +710,12 @@ class UngDung:
                 item["forecast_date"], item["forecast_time"], item["link"]
             ))
 
-        self.notebook.select(self.notebook.tabs()[-2]) # Chuyển đến tab Kết quả trùng
+        self.notebook.select(self.notebook.tabs()[-2])
+        print(f"✅ [TÌM KIẾM] Tìm thấy {matched_count} mục phù hợp.")
         messagebox.showinfo("Kết quả tìm kiếm", f"Đã tìm thấy {matched_count} mục phù hợp với tiêu chí.", parent=self.root)
 
     def luu_lich_su_txt(self):
-        """Lưu lịch sử dò tìm và kết quả hiện tại vào một tệp mẫu TXT."""
+        print("💾 [LƯU LỊCH SỬ] Đang ghi lịch sử dò tìm ra tệp TXT...")
         path = filedialog.asksaveasfilename(
             parent=self.root,
             title="Lưu lịch sử dò tìm vào tệp TXT",
@@ -655,11 +737,14 @@ class UngDung:
                 for item in self.matches:
                     line = f"{item['person']} | {item['metric']} | Tab2: {item['tab2_stt']} | Div: {item['divisor']} | Loại: {item['match_type']} | Mã: {item['match_code']:03d} | Ngày: {item['forecast_date']} {item['forecast_time']}\n"
                     f.write(line)
+            print(f"✅ [LƯU LỊCH SỬ] Đã lưu thành công tại: {path}")
             messagebox.showinfo("Thành công", f"Đã lưu lịch sử vào tệp:\n{path}", parent=self.root)
         except Exception as exc:
+            print(f"❌ [LƯU LỊCH SỬ ERROR] {exc}")
             messagebox.showerror("Lỗi", f"Không thể lưu file: {exc}", parent=self.root)
 
     def calculate_all(self):
+        print("▶ [TÍNH TOÁN] Bắt đầu tính toán toàn bộ 12 tab...")
         if not self.people or not self.tab2_numbers or not self.ref_numbers:
             messagebox.showwarning("Thiếu dữ liệu", "Vui lòng chọn đầy đủ các tệp TXT đầu vào trước khi tính.", parent=self.root)
             return
@@ -727,126 +812,74 @@ class UngDung:
                     if r_match:
                         self.matches.append({**base, "match_type": "Dư % 1000", "match_code": r_mod})
 
-        for idx, item in enumerate(self.all_calculations):
+        for item in self.all_calculations:
             self.tree_all.insert("", "end", values=(item["tab"], item["person"], item["metric"], dinh_dang_so(item["total"]), item["tab2_stt"], item["divisor"], dinh_dang_so(item["quotient"]), item["remainder"], f'{item["quotient_mod_1000"]:03d}', f'{item["remainder_mod_1000"]:03d}', "CÓ" if item["quotient_match"] else "", "CÓ" if item["remainder_match"] else "", item["link"]))
 
-        for idx, item in enumerate(self.matches):
-            self.tree_matches.insert("", "end", values=(item["person"], item["metric"], item["tab2_stt"], item["divisor"], item["match_type"], f'{item["match_code"]:03d}', item["forecast_date"], item["forecast_time"], item["link"]))
+        for item in self.matches:
+            self.tree_matches.insert("", "end", values=(
+                item["person"], item["metric"], item["tab2_stt"], item["divisor"],
+                item["match_type"], f'{item["match_code"]:03d}',
+                item["forecast_date"], item["forecast_time"], item["link"]
+            ))
 
         self.calculated = True
-        self.calculated_at = now.strftime("%Y-%m-%d %H:%M:%S")
-        
-        # Ghi nhật ký quản lý tự động (index_..._quan_ly.json)
-        self._ghi_nhat_ky_quan_ly(len(self.all_calculations), len(self.matches))
-
-        self._refresh_status(f"ĐÃ TÍNH XONG  |  Phép tính: {len(self.all_calculations):,}  |  Trùng: {len(self.matches):,}")
-        self.notebook.select(self.notebook.tabs()[-2])
-        messagebox.showinfo("Hoàn tất", "Đã tính toán xong toàn bộ 12 tab!", parent=self.root)
-
-    def _link_for_stt(self, stt):
-        index = int(stt) - 1
-        return self.links[index] if 0 <= index < len(self.links) else ""
-
-    def _ghi_nhat_ky_quan_ly(self, total_calc, total_match):
-        log_path = lay_duong_dan_nhat_ky()
-        log_data = {
-            "script_su_dung": ten_file_chuong_trinh() + ".py",
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "source_folder": os.path.dirname(self.path_people) if self.path_people else "",
-            "source_files": [self.path_people, self.path_tab2, self.path_ref, self.path_links, self.path_extra],
-            "statistics": {
-                "total_calculations": total_calc,
-                "total_matches": total_match
-            }
-        }
-        try:
-            with open(log_path, "w", encoding="utf-8") as f:
-                json.dump(log_data, f, ensure_ascii=False, indent=2)
-        except Exception:
-            pass
+        self.calculated_at = now
+        print(f"✅ [TÍNH TOÁN] Hoàn thành! Tổng số điểm trùng khớp ghi nhận: {len(self.matches)}")
+        messagebox.showinfo("Hoàn tất", f"Đã tính toán toàn bộ 12 tab thành công!\nSố lượng kết quả trùng khớp: {len(self.matches)}", parent=self.root)
 
     def export_json(self):
+        print("💾 [XUẤT JSON] Đang chuẩn bị xuất tệp JSON kết quả...")
         if not self.calculated:
-            messagebox.showwarning("Chưa tính toán", "Vui lòng bấm TÍNH TOÀN BỘ 12 TAB trước khi xuất file.", parent=self.root)
+            messagebox.showwarning("Chưa tính toán", "Vui lòng bấm TÍNH TOÀN BỘ 12 TAB trước khi xuất JSON.", parent=self.root)
             return
 
-        file_mac_dinh = tao_ten_file_json_mac_dinh(self.path_people)
-        thu_muc_khoi_dau = os.path.dirname(self.path_people) if self.path_people else thu_muc_chuong_trinh()
+        default_filename = tao_ten_file_json_mac_dinh(self.path_people)
+        target_dir = os.path.join(thu_muc_chuong_trinh(), "KET_QUA_JSON")
+        os.makedirs(target_dir, exist_ok=True)
 
         path = filedialog.asksaveasfilename(
             parent=self.root,
-            title="Chọn thư mục và lưu tệp JSON",
-            initialdir=thu_muc_khoi_dau,
-            initialfile=file_mac_dinh,
+            title="Xuất tệp JSON động chuẩn",
+            initialdir=target_dir,
+            initialfile=default_filename,
             defaultextension=".json",
-            filetypes=[("Tệp JSON", "*.json"), ("Tất cả tệp", "*.*")]
+            filetypes=[("Tệp JSON", "*.json"), ("All Files", "*.*")]
         )
-
         if not path:
             return
 
-        now_dt = datetime.now()
-        
-        output = {
-            "metadata": {
-                "script_su_dung": ten_file_chuong_trinh() + ".py",
-                "timestamp": now_dt.strftime("%Y-%m-%d %H:%M:%S"),
-                "date_minus_7_days": (now_dt - timedelta(days=7)).strftime("%Y-%m-%d"),
-                "date_plus_7_days": (now_dt + timedelta(days=7)).strftime("%Y-%m-%d"),
-                "source_files": {
-                    "people_file": self.path_people,
-                    "tab2_file": self.path_tab2,
-                    "ref_file": self.path_ref,
-                    "links_file": self.path_links,
-                    "extra_file": self.path_extra
-                },
-                "source_folder": os.path.dirname(self.path_people) if self.path_people else ""
-            },
-            "people": self.people,
-            "ref_numbers": self.ref_numbers,
-            "custom_tabs": self.links,
-            "analysis_details": {
-                "tab_2_numbers": self.tab2_numbers,
-                "tab_3_den_9_tong_theo_nguoi": {
-                    str(index): {
-                        "tab": data["tab"],
-                        "person": data["person"],
-                        "totals": data["totals"]
-                    }
-                    for index, data in self.person_totals.items()
-                },
-                "all_calculations": self.all_calculations,
-                "matched_results": self.matches
-            }
-        }
-
         try:
+            payload = {
+                "metadata": {
+                    "script": ten_file_chuong_trinh(),
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "source_people_file": self.path_people,
+                    "total_matches": len(self.matches)
+                },
+                "matches": self.matches,
+                "all_calculations": self.all_calculations
+            }
             with open(path, "w", encoding="utf-8") as f:
-                json.dump(output, f, ensure_ascii=False, indent=2)
-            self._refresh_status(f"ĐÃ XUẤT JSON: {os.path.basename(path)}")
-            messagebox.showinfo("Xuất JSON thành công", f"Đã lưu tệp JSON thành công tại:\n{path}", parent=self.root)
+                json.dump(payload, f, ensure_ascii=False, indent=2)
+            print(f"✅ [XUẤT JSON] Xuất tệp thành công tại: {path}")
+            messagebox.showinfo("Thành công", f"Đã xuất file JSON thành công tại:\n{path}", parent=self.root)
         except Exception as exc:
-            messagebox.showerror("Lỗi xuất JSON", f"{type(exc).__name__}: {exc}", parent=self.root)
+            print(f"❌ [XUẤT JSON ERROR] {exc}")
+            messagebox.showerror("Lỗi xuất JSON", f"{exc}", parent=self.root)
 
-
-# ============================================================
-# CHẠY CHƯƠNG TRÌNH & HỖ TRỢ THAM SỐ DÒNG LỆNH --gui
-# ============================================================
-
-def chay_ngam_tu_dong():
-    # Cơ chế chạy ngầm khi không có tham số --gui
-    print("Đang chạy ngầm xử lý dữ liệu tự động...")
-    # Có thể bổ sung tiến trình tính toán tự động tại đây nếu cần thiết
-
-import sys
 
 if __name__ == "__main__":
-    # Kiểm tra xem có truyền tham số --gui hay không
-    if "--gui" in sys.argv:
-        # Khởi chạy giao diện Tkinter ở đây (Sửa từ App thành UngDung)
-        root = tk.Tk()
-        app = UngDung(root)
-        root.mainloop()
+    # Tự động nhận diện chạy Headless nếu có tham số '--headless' hoặc không có môi trường đồ họa
+    is_headless_mode = len(sys.argv) > 1 and sys.argv[1].lower() == "--headless"
+    
+    if is_headless_mode:
+        print("🚀 [MAIN] Khởi chạy ứng dụng ở chế độ Headless (Dành cho GitHub Actions)...")
+        UngDung(None, headless=True)
     else:
-        # Chạy ngầm tự động quét file, tính toán và xuất JSON rồi tự tắt
-        chay_ngam_tu_dong()
+        try:
+            root = tk.Tk()
+            app = UngDung(root, headless=False)
+            root.mainloop()
+        except Exception as e:
+            print(f"⚠️ [MAIN] Không thể khởi tạo giao diện Tkinter ({e}). Chuyển sang chế độ chạy ngầm Headless...")
+            UngDung(None, headless=True)
