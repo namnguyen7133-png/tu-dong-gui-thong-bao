@@ -1,7 +1,9 @@
+# -*- coding: utf-8 -*-
 import os
 import json
 import math
 import sys
+import re
 from datetime import datetime, timedelta
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
@@ -18,7 +20,9 @@ class UngDungLichChuyenSau:
         self.la_chedo_gui = la_chedo_gui
         self.danh_sach_su_kien = []
         
-        # Quản lý danh sách 4 đến 5 tệp nguồn linh hoạt & ghi nhớ đường dẫn[cite: 2]
+        print(f"🚀 [INIT] Khởi chạy ứng dụng với script: {TEN_SCRIPT}.py (Chế độ GUI: {la_chedo_gui})")
+        
+        # Quản lý danh sách 4 đến 5 tệp nguồn linh hoạt & ghi nhớ đường dẫn
         self.cac_file_nguon = []
         if file_nguon_chon:
             self.cac_file_nguon = file_nguon_chon
@@ -33,7 +37,7 @@ class UngDungLichChuyenSau:
         self.root.geometry("1250x900")
         self.root.configure(bg="#1E1E2E")
 
-        # 24 tiết khí chuẩn xác theo mốc ngày dương lịch hàng năm[cite: 1]
+        # 24 tiết khí chuẩn xác theo mốc ngày dương lịch hàng năm
         self.tiet_khi_danh_sach = [
             {"name": "Tiểu Hàn", "month": 1, "day": 5, "season": "Đông", "eat": "Cháo thịt băm, khoai sọ, trà gừng", "buy": "Vôi, muối, đồ giữ ấm"},
             {"name": "Đại Hàn", "month": 1, "day": 20, "season": "Đông", "eat": "Cháo gà hầm sâm, lẩu nóng", "buy": "Đồ sưởi, thực phẩm khô"},
@@ -130,8 +134,11 @@ class UngDungLichChuyenSau:
                 with open(CONFIG_FILE, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     self.cac_file_nguon = data.get("nguon_txt", [])
-            except:
-                pass
+                    print(f"⚙️ [CONFIG] Đã tải thành công tệp cấu hình từ {CONFIG_FILE}. Các tệp nguồn: {self.cac_file_nguon}")
+            except Exception as e:
+                print(f"⚠️ [CONFIG ERROR] Lỗi đọc tệp cấu hình: {e}")
+        else:
+            print(f"ℹ️ [CONFIG] Không tìm thấy tệp cấu hình {CONFIG_FILE}, khởi tạo mới.")
 
     def luu_cau_hinh(self):
         data = {
@@ -139,8 +146,12 @@ class UngDungLichChuyenSau:
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "nguon_txt": self.cac_file_nguon
         }
-        with open(CONFIG_FILE, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
+        try:
+            with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=4)
+            print(f"💾 [CONFIG] Đã lưu cấu hình vào tệp {CONFIG_FILE}")
+        except Exception as e:
+            print(f"❌ [CONFIG ERROR] Lỗi lưu cấu hình: {e}")
 
     def ghi_nhap_nhat_ky(self, duong_dan_json):
         index_data = {
@@ -149,12 +160,72 @@ class UngDungLichChuyenSau:
             "file_json_xuat": duong_dan_json,
             "cac_file_nguon_da_quet": self.cac_file_nguon
         }
-        with open(INDEX_FILE, "w", encoding="utf-8") as f:
-            json.dump(index_data, f, ensure_ascii=False, indent=4)
+        try:
+            with open(INDEX_FILE, "w", encoding="utf-8") as f:
+                json.dump(index_data, f, ensure_ascii=False, indent=4)
+            print(f"📊 [LOG] Đã ghi tệp nhật ký hệ thống vào {INDEX_FILE}")
+        except Exception as e:
+            print(f"❌ [LOG ERROR] Lỗi ghi nhật ký: {e}")
+
+    def quet_6_thu_muc_bang(self):
+        """Quét chi tiết các tệp dữ liệu từ muc_1 đến muc_6 và các tệp TXT liên quan"""
+        danh_sach_so = set()
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        print("🔍 [QUÉT BẢNG] Bắt đầu quét dữ liệu từ các thư mục muc_1 đến muc_6...")
+        
+        for i in range(1, 7):
+            duong_dan_muc = os.path.join(base_dir, f"muc_{i}")
+            if os.path.exists(duong_dan_muc) and os.path.isdir(duong_dan_muc):
+                print(f"   📁 Tìm thấy thư mục bảng: {duong_dan_muc}")
+                for file in os.listdir(duong_dan_muc):
+                    duong_dan_file = os.path.join(duong_dan_muc, file)
+                    if os.path.isfile(duong_dan_file):
+                        try:
+                            with open(duong_dan_file, "r", encoding="utf-8", errors="ignore") as f:
+                                content = f.read()
+                                numbers = re.findall(r'\d+', content)
+                                print(f"      📄 Đọc tệp {file}: tìm thấy {len(numbers)} số.")
+                                for num in numbers:
+                                    danh_sach_so.add(int(num))
+                        except Exception as e:
+                            print(f"      ❌ Lỗi đọc tệp {file}: {e}")
+            else:
+                print(f"   ⚠️ Không tìm thấy thư mục: muc_{i}")
+        print(f"✅ [QUÉT BẢNG] Tổng số lượng số duy nhất thu thập từ 6 bảng: {len(danh_sach_so)}")
+        return danh_sach_so
+
+    def kiem_tra_cac_tep_txt_va_dac_biet(self):
+        """Kiểm tra sự tồn tại và trạng thái của THUONGLUU.txt và danh_sach_benh.txt"""
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        thuong_luu_path = os.path.join(base_dir, "THUONGLUU.txt")
+        benh_path = os.path.join(base_dir, "danh_sach_benh.txt")
+
+        print("📋 [KIỂM TRA TỆP ĐẶC BIỆT]:")
+        if os.path.exists(thuong_luu_path):
+            print(f"   ✔️ Đã tìm thấy tệp: {thuong_luu_path}")
+        else:
+            print(f"   ⚠️ Chưa tìm thấy tệp: {thuong_luu_path}")
+
+        if os.path.exists(benh_path):
+            print(f"   ✔️ Đã tìm thấy tệp: {benh_path}")
+        else:
+            print(f"   ⚠️ Chưa tìm thấy tệp: {benh_path}")
+
+        print("📂 [KIỂM TRA TỆP NGUỒN TXT HIỆN TẠI]:")
+        for path in self.cac_file_nguon:
+            if os.path.exists(path):
+                print(f"   ✔️ Tồn tại: {path}")
+            else:
+                print(f"   ❌ Không tồn tại: {path}")
 
     def chay_ngam_xu_ly(self):
-        print(f"[{TEN_SCRIPT}] Đang chạy ngầm tự động quét và xuất file...")
+        print(f"🚀 [HEADLESS MODE] Đang chạy ngầm tự động (GitHub Actions) cho script: {TEN_SCRIPT}.py")
         self.tai_cau_hinh_cu()
+        
+        # Thực hiện kiểm tra toàn bộ tệp nguồn và quét 6 bảng
+        self.kiem_tra_cac_tep_txt_va_dac_biet()
+        self.quet_6_thu_muc_bang()
+
         now = datetime.now()
         thu_muc_nguon = os.path.dirname(self.cac_file_nguon[0]) if self.cac_file_nguon else "MacDinh"
         ten_thu_muc_gon = os.path.basename(thu_muc_nguon) if thu_muc_nguon else "Data"
@@ -178,10 +249,13 @@ class UngDungLichChuyenSau:
             "custom_tabs": [{"link": "https://www.youtube.com"}],
             "events": self.danh_sach_su_kien
         }
-        with open(path_save, "w", encoding="utf-8") as f:
-            json.dump(data_json, f, ensure_ascii=False, indent=4)
-        self.ghi_nhap_nhat_ky(path_save)
-        print(f"[{TEN_SCRIPT}] Hoàn tất xuất ngầm tại: {path_save}")
+        try:
+            with open(path_save, "w", encoding="utf-8") as f:
+                json.dump(data_json, f, ensure_ascii=False, indent=4)
+            self.ghi_nhap_nhat_ky(path_save)
+            print(f"✅ [HEADLESS SUCCESS] Hoàn tất xuất ngầm tệp JSON tại: {path_save}")
+        except Exception as e:
+            print(f"❌ [HEADLESS ERROR] Không thể xuất tệp JSON: {e}")
 
     # --- CÁC THUẬT TOÁN THIÊN VĂN & LỊCH ---
     def tinh_tiet_khi_hien_tai(self, dt):
@@ -348,7 +422,6 @@ class UngDungLichChuyenSau:
             self.tree_tietkhi.column(col, width=220, anchor="center")
         self.tree_tietkhi.pack(fill=tk.BOTH, expand=True, padx=15, pady=10)
 
-        # Đổi tên biến vòng lặp thành 'tiet_khi_item' để tránh trùng lặp với module 'tk'
         for tiet_khi_item in self.tiet_khi_danh_sach:
             self.tree_tietkhi.insert("", "end", values=(tiet_khi_item["name"], tiet_khi_item["season"], tiet_khi_item["buy"], tiet_khi_item["eat"]))
 
@@ -388,7 +461,6 @@ class UngDungLichChuyenSau:
         btn_export = tk.Button(f_src, text="💾 Xuất JSON (Hộp thoại Save As)", font=("Segoe UI", 10, "bold"), bg="#00FFC8", fg="#000", command=self.xuat_json_dong)
         btn_export.pack(side=tk.RIGHT, padx=5)
 
-        # Khung các ô tìm kiếm nâng cao
         f_search = tk.LabelFrame(self.tab4, text=" 🔍 Ô Tìm Kiếm Nâng Cao & Giống Dữ Liệu Tệp TXT ", fg="#00FFC8", bg="#2A2A3C", font=("Segoe UI", 9, "bold"))
         f_search.pack(pady=5, padx=15, fill=tk.X)
 
@@ -454,11 +526,13 @@ class UngDungLichChuyenSau:
             return
         
         self.cac_file_nguon = list(paths)
+        print(f"📂 [CHỌN FILE] Đã chọn {len(self.cac_file_nguon)} tệp nguồn: {self.cac_file_nguon}")
         self.luu_cau_hinh()
         self.nap_du_lieu_tu_cac_file()
         messagebox.showinfo("Thành công", f"Đã chọn và ghi nhớ {len(self.cac_file_nguon)} tệp nguồn TXT!")
 
     def nap_du_lieu_tu_cac_file(self):
+        print(f"🔄 [NẠP DỮ LIỆU] Đang nạp dữ liệu từ {len(self.cac_file_nguon)} tệp nguồn TXT...")
         self.danh_sach_su_kien.clear()
         for item in self.tree_tab4.get_children():
             self.tree_tab4.delete(item)
@@ -467,6 +541,7 @@ class UngDungLichChuyenSau:
             ten_file = os.path.basename(path)
             try:
                 with open(path, "r", encoding="utf-8-sig", errors="ignore") as f:
+                    count_lines = 0
                     for line in f:
                         dong = line.strip()
                         if not dong: continue
@@ -485,13 +560,17 @@ class UngDungLichChuyenSau:
                         self.tree_tab4.insert("", "end", values=(
                             len(self.danh_sach_su_kien), ten_file, ten, ngay, benh, ghichu
                         ))
+                        count_lines += 1
+                    print(f"   📄 Đã nạp thành công {count_lines} dòng từ tệp: {ten_file}")
             except Exception as e:
-                print(f"Lỗi đọc file {ten_file}: {e}")
+                print(f"❌ [LỖI ĐỌC FILE] Không thể đọc file {ten_file}: {e}")
+        print(f"✅ [NẠP DỮ LIỆU] Tổng số sự kiện/bản ghi đã nạp: {len(self.danh_sach_su_kien)}")
 
     def thuc_hien_do_tim(self):
         k_ten = self.s_ten.get().strip().lower()
         k_ngay = self.s_ngay.get().strip()
         k_benh = self.s_benh.get().strip().lower()
+        print(f"🔍 [DÒ TÌM] Tiêu chí tìm kiếm -> Tên: '{k_ten}' | Ngày: '{k_ngay}' | Bệnh: '{k_benh}'")
 
         for item in self.tree_tab4.get_children():
             self.tree_tab4.delete(item)
@@ -508,6 +587,7 @@ class UngDungLichChuyenSau:
                     stt, ev["nguon"], ev["ten"], ev["ngay"], ev["benh"], ev["ghichu"]
                 ))
                 stt += 1
+        print(f"✅ [DÒ TÌM] Đã lọc và hiển thị {stt - 1} kết quả phù hợp.")
 
     def luu_lich_su_vao_txt(self):
         if not self.cac_file_nguon:
@@ -523,9 +603,11 @@ class UngDungLichChuyenSau:
         try:
             with open(target_txt, "a", encoding="utf-8") as f:
                 f.write(dong_moi)
+            print(f"💾 [LƯU LỊCH SỬ] Đã ghi thêm bản ghi vào tệp TXT đích: {target_txt}")
             messagebox.showinfo("Thành công", f"Đã lưu lịch sử mới vào tệp:\n{target_txt}")
             self.nap_du_lieu_tu_cac_file()
         except Exception as e:
+            print(f"❌ [LƯU LỊCH SỬ ERROR] Không thể lưu vào file: {e}")
             messagebox.showerror("Lỗi", f"Không thể lưu vào file: {e}")
 
     # --- XUẤT JSON ĐỘNG THEO HỘP THOẠI `asksaveasfilename` ---
@@ -535,7 +617,6 @@ class UngDungLichChuyenSau:
         ten_thu_muc_gon = os.path.basename(thu_muc_nguon) if thu_muc_nguon else "Data"
         timestamp_str = now.strftime("%Y%m%d_%H%M%S")
         
-        # Công thức đặt tên chuẩn: [TênScript]_[TênThưMụcNguồn]_[YYYYMMDD_HHMMSS].json[cite: 2]
         default_json_name = f"{TEN_SCRIPT}_{ten_thu_muc_gon}_{timestamp_str}.json"
 
         os.makedirs(DEFAULT_DIR, exist_ok=True)
@@ -568,19 +649,22 @@ class UngDungLichChuyenSau:
             with open(path_save, "w", encoding="utf-8") as f:
                 json.dump(data_json, f, ensure_ascii=False, indent=4)
             self.ghi_nhap_nhat_ky(path_save)
+            print(f"💾 [XUẤT JSON] Đã xuất thành công tệp JSON tại: {path_save}")
             messagebox.showinfo("Thành công", f"Đã xuất file JSON động thành công tại:\n{path_save}")
         except Exception as e:
+            print(f"❌ [XUẤT JSON ERROR] Không thể lưu file JSON: {e}")
             messagebox.showerror("Lỗi", f"Không thể lưu file JSON: {e}")
 
 if __name__ == "__main__":
-    # Mặc định chạy ngầm; thêm tham số `--gui` để hiển thị giao diện[cite: 2]
     che_do_gui = "--gui" in sys.argv
     
     if che_do_gui:
+        print("🖥️ [MAIN] Khởi chạy ứng dụng ở chế độ Giao diện (GUI)...")
         root = tk.Tk()
         app = UngDungLichChuyenSau(root, la_chedo_gui=True)
         root.mainloop()
     else:
+        print("⚙️ [MAIN] Khởi chạy ứng dụng ở chế độ Không giao diện (Headless / GitHub Actions)...")
         root = tk.Tk()
         root.withdraw()
         app = UngDungLichChuyenSau(root, la_chedo_gui=False)
