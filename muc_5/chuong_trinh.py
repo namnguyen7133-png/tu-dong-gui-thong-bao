@@ -6,21 +6,17 @@ import re
 import sys
 import time
 
-
 def thu_muc_chuong_trinh():
     if getattr(sys, "frozen", False):
         return os.path.dirname(os.path.abspath(sys.executable))
     return os.path.dirname(os.path.abspath(__file__))
 
-
 thu_muc = thu_muc_chuong_trinh()
 SCRIPT_NAME = os.path.splitext(os.path.basename(__file__))[0]
 CONFIG_FILE = os.path.join(thu_muc, f"config_{SCRIPT_NAME}.json")
 
-
 def doc_cau_hinh():
-    """Nhận đường dẫn từ tham số dòng lệnh (--outDir) hoặc mặc định về thư mục mây KET_QUA_JSON."""
-    # 🎯 Chuẩn hóa đường dẫn mặc định thành thư mục tương đối trên mây, không dùng ổ G
+    """Nhận đường dẫn từ tham số dòng lệnh (--outDir) hoặc mặc định về thư mục tương đối KET_QUA_JSON."""
     thu_muc_dich = os.path.join(thu_muc, "KET_QUA_JSON")
 
     for i in range(len(sys.argv) - 1):
@@ -34,7 +30,6 @@ def doc_cau_hinh():
         pass
     return thu_muc_dich
 
-
 def luu_cau_hinh(duong_dan):
     try:
         data = {
@@ -47,10 +42,8 @@ def luu_cau_hinh(duong_dan):
     except Exception as e:
         print(f"Lỗi lưu config: {e}")
 
-
 DAYS_TO_KEEP = 7
 p_nguoi = os.path.join(thu_muc, "DSNGUOINHA.txt")
-
 
 def tim_file_so_chia():
     for file_trong_thu_muc in os.listdir(thu_muc):
@@ -59,7 +52,6 @@ def tim_file_so_chia():
         ):
             return os.path.join(thu_muc, file_trong_thu_muc)
     return ""
-
 
 def doc_txt_raw(path):
     if not os.path.exists(path):
@@ -73,7 +65,6 @@ def doc_txt_raw(path):
     with open(path, "r", encoding="utf-8", errors="ignore") as f:
         return f.read()
 
-
 def doc_danh_sach_nguoi_tu_chuoi(noi_dung):
     people = []
     for dong in noi_dung.splitlines():
@@ -86,7 +77,6 @@ def doc_danh_sach_nguoi_tu_chuoi(noi_dung):
             time_str = parts[2] if len(parts) >= 3 else "00:00:00"
             people.append({"name": parts[0], "dob": dob_str, "time": time_str})
     return people
-
 
 def doc_cac_so_va_gio_phut_tu_txt(path):
     ket_qua_mapping = {}
@@ -116,7 +106,6 @@ def doc_cac_so_va_gio_phut_tu_txt(path):
 
     return danh_sach_so, ket_qua_mapping, danh_sach_link
 
-
 def tinh_gio_phat_sinh(time_str):
     try:
         parts = time_str.split(":")
@@ -133,7 +122,6 @@ def tinh_gio_phat_sinh(time_str):
 
     return f"{abs(ket_qua_gio):02d}:{phut_sinh:02d}:00"
 
-
 def dondep_json_cu(target_dir):
     if not os.path.exists(target_dir):
         return
@@ -143,8 +131,8 @@ def dondep_json_cu(target_dir):
         for file in os.listdir(target_dir):
             if (
                 file.lower().endswith(".json")
-                and file.lower() != "index.json"
                 and not file.lower().startswith("config_")
+                and not file.lower().startswith("index_")
             ):
                 duong_dan_file = os.path.join(target_dir, file)
                 if os.path.isfile(duong_dan_file):
@@ -156,10 +144,9 @@ def dondep_json_cu(target_dir):
     except Exception:
         pass
 
-
 def cap_nhat_index(thong_tin_file, target_dir):
     os.makedirs(target_dir, exist_ok=True)
-    index_path = os.path.join(target_dir, "index.json")
+    index_path = os.path.join(target_dir, f"index_{SCRIPT_NAME}_quan_ly.json")
     danh_sach = []
     if os.path.exists(index_path):
         try:
@@ -173,7 +160,6 @@ def cap_nhat_index(thong_tin_file, target_dir):
             json.dump(danh_sach, f, ensure_ascii=False, indent=4)
     except Exception:
         pass
-
 
 def thuc_hien_tinh_toan_va_xuat_json():
     target_dir = doc_cau_hinh()
@@ -189,10 +175,14 @@ def thuc_hien_tinh_toan_va_xuat_json():
     tat_ca_so_so_sanh = []
     mapping_gio_phut_tong = {}
     tong_hop_links = []
+    danh_sach_tep_nguon = [p_nguoi]
+    if p_thoigian:
+        danh_sach_tep_nguon.append(p_thoigian)
 
     for file_name in os.listdir(thu_muc):
         if file_name.lower().endswith(".txt") and file_name.lower() != "dsnguoinha.txt":
             duong_dan_txt_moi = os.path.join(thu_muc, file_name)
+            danh_sach_tep_nguon.append(duong_dan_txt_moi)
             so_list, map_gp, lks = doc_cac_so_va_gio_phut_tu_txt(duong_dan_txt_moi)
             tat_ca_so_so_sanh.extend(so_list)
             mapping_gio_phut_tong.update(map_gp)
@@ -202,7 +192,11 @@ def thuc_hien_tinh_toan_va_xuat_json():
         tong_hop_links = ["https://www.youtube.com"]
 
     now = datetime.now()
-    data_tab4, data_tab5, data_tab6 = [], [], []
+    timestamp_str = now.strftime("%Y-%m-%d %H:%M:%S")
+    date_minus_7 = (now - timedelta(days=7)).strftime("%Y-%m-%d")
+    date_plus_7 = (now + timedelta(days=7)).strftime("%Y-%m-%d")
+
+    ket_qua_tong_ket = []
 
     for p in danh_sach_nguoi:
         try:
@@ -214,147 +208,84 @@ def thuc_hien_tinh_toan_va_xuat_json():
         nam_nguyen = now.year - dob_dt.year
         nam_du = delta_days % 365
 
-        quy_nguyen = delta_days // 90
-        quy_du = delta_days % 90
-        if quy_nguyen > 1000:
-            quy_nguyen %= 1000
-        if quy_du > 1000:
-            quy_du %= 1000
-
-        thang_nguyen = delta_days // 30
-        thang_du = delta_days % 30
-        if thang_nguyen > 1000:
-            thang_nguyen %= 1000
-        if thang_du > 1000:
-            thang_du %= 1000
-
-        tuan_nguyen = delta_days // 7
-        tuan_du = delta_days % 7
-        if tuan_nguyen > 1000:
-            tuan_nguyen %= 1000
-        if tuan_du > 1000:
-            tuan_du %= 1000
-
-        gio_du = (delta_days * 24) % 1000
-        phut_du = (delta_days * 24 * 60) % 1000
-        gio_phat_sinh = tinh_gio_phat_sinh(p["time"])
-
-        row_4 = {
-            "name": p["name"],
-            "dob": p["dob"],
-            "time": p["time"],
-            "nam_nguyen": nam_nguyen,
-            "nam_du": nam_du,
-            "quy_nguyen": quy_nguyen,
-            "quy_du": quy_du,
-            "thang_nguyen": thang_nguyen,
-            "thang_du": thang_du,
-            "tuan_nguyen": tuan_nguyen,
-            "tuan_du": tuan_du,
-            "gio_du": gio_du,
-            "phut_du": phut_du,
-            "gio_phat_sinh": gio_phat_sinh,
+        diffs_dict = {
+            "Năm (366d)": nam_nguyen,
+            "Ngày": delta_days,
+            "Giờ": delta_days * 24,
+            "Phút": delta_days * 24 * 60
         }
-        data_tab4.append(row_4)
 
-        for sc in so_chia_list:
-            if sc == 0:
-                continue
-            thoi_gian_dict = {
-                "nam_nguyen": nam_nguyen,
-                "nam_du": nam_du,
-                "quy_nguyen": quy_nguyen,
-                "quy_du": quy_du,
-                "thang_nguyen": thang_nguyen,
-                "thang_du": thang_du,
-                "tuan_nguyen": tuan_nguyen,
-                "tuan_du": tuan_du,
-                "gio_du": gio_du,
-                "phut_du": phut_du,
+        for key, val in diffs_dict.items():
+            phan_nguyen = val // 1
+            phan_du = val % 1
+            mod_1000_nguyen = phan_nguyen % 1000
+            mod_1000_du = 0
+            can_bu = 1000 - mod_1000_nguyen if mod_1000_nguyen > 0 else 0
+
+            link_gan = tong_hop_links[0] if tong_hop_links else "Không có link"
+
+            item_ket_qua = {
+                "tab": "Tab_Tu_Dong",
+                "ten": p["name"],
+                "ngay_sinh": p["dob"],
+                "gio_sinh": p["time"],
+                "chi_so": key,
+                "gia_tri_goc": val,
+                "phan_nguyen": phan_nguyen,
+                "mod_1000_nguyen": mod_1000_nguyen,
+                "trung_nguyen": mod_1000_nguyen in tat_ca_so_so_sanh,
+                "phan_du": phan_du,
+                "mod_1000_du": mod_1000_du,
+                "trung_du": mod_1000_du in tat_ca_so_so_sanh,
+                "can_bu": can_bu,
+                "thong_tin_du": f"Hết vòng (cộng {can_bu} đơn vị)",
+                "canh_bao_col": f"Cảnh báo thời điểm sinh {p['time']}",
+                "moc_thoi_gian": timestamp_str,
+                "link_video": link_gan,
+                "chi_tiet_trung_khop": f"Nguyên: {phan_nguyen} (%1000={mod_1000_nguyen}) | Dư: {phan_du} (%1000={mod_1000_du})"
             }
-            for key_val, val in thoi_gian_dict.items():
-                div_val = val // sc
-                mod_val = val % sc
-                div_1000 = round(div_val / 1000.0, 4)
-                mod_1000 = round(mod_val / 1000.0, 4)
+            ket_qua_tong_ket.append(item_ket_qua)
 
-                row_5 = {
-                    "name": p["name"],
-                    "so_chia": sc,
-                    "loai": key_val,
-                    "gia_tri": val,
-                    "div": div_val,
-                    "mod": mod_val,
-                    "div_1000": div_1000,
-                    "mod_1000": mod_1000,
-                }
-                data_tab5.append(row_5)
-
-                for kq in [div_val, mod_val, div_1000, mod_1000]:
-                    if kq in tat_ca_so_so_sanh or int(kq) in tat_ca_so_so_sanh:
-                        gio_phut_gan = mapping_gio_phut_tong.get(
-                            int(kq) if isinstance(kq, (int, float)) else kq, gio_phat_sinh
-                        )
-                        row_6 = {
-                            "name": p["name"],
-                            "loai_trung": f"{key_val} (Số chia {sc})",
-                            "gia_tri_trung": kq,
-                            "gio_phut_cot2": gio_phut_gan,
-                            "gio_phat_sinh_tinh_toan": gio_phat_sinh,
-                            "duong_dan": "",
-                        }
-                        data_tab6.append(row_6)
-
-    ten_thu_muc_goc = os.path.basename(thu_muc)
+    ten_thu_muc_goc = os.path.basename(thu_muc) or "ThuMucGoc"
     os.makedirs(target_dir, exist_ok=True)
 
     thoi_gian_xuat = datetime.now().strftime("%Y%m%d_%H%M%S")
-    timestamp_iso = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    file_nguon_chinh = p_thoigian if p_thoigian else p_nguoi
-    ten_file_nguon = os.path.basename(file_nguon_chinh) if file_nguon_chinh else "khong_ro"
-
+    
+    # 🎯 Đặt tên tệp JSON đầu ra ĐÚNG CHUẨN YÊU CẦU: [TênScript]_[TênThưMụcNguồn]_[YYYYMMDD_HHMMSS].json
     ten_file_json = f"{SCRIPT_NAME}_{ten_thu_muc_goc}_{thoi_gian_xuat}.json"
     output_path = os.path.join(target_dir, ten_file_json)
 
     noi_dung_xuat = {
         "metadata": {
-            "ten_script_tao": SCRIPT_NAME,
-            "ten_thu_muc_goc": ten_thu_muc_goc,
-            "ten_file_nguon": ten_file_nguon,
-            "duong_dan_file_nguon": file_nguon_chinh,
-            "timestamp": timestamp_iso,
+            "script_su_dung": f"{SCRIPT_NAME}.py",
+            "timestamp": timestamp_str,
+            "date_minus_7_days": date_minus_7,
+            "date_plus_7_days": date_plus_7,
+            "thu_muc_nguon": ten_thu_muc_goc,
+            "danh_sach_file_nguon": danh_sach_tep_nguon
         },
         "people": danh_sach_nguoi,
         "ref_numbers": list(set(tat_ca_so_so_sanh)),
-        "ref_date": datetime.now().strftime("%Y-%m-%d"),
-        "ref_time": datetime.now().strftime("%H:%M:%S"),
-        "custom_tabs": {"Tab_Tu_Dong": {"links": tong_hop_links}},
-        "data": {
-            "thong_ke_tab4": data_tab4,
-            "chia_so_tab5": data_tab5,
-            "so_trung_tab6": data_tab6,
-        },
+        "custom_tabs": {"links": tong_hop_links},
+        "ket_qua_tong_ket": ket_qua_tong_ket
     }
 
     try:
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(noi_dung_xuat, f, ensure_ascii=False, indent=4)
-        print(f"Đã xuất tệp JSON chuẩn tương thích tại: {output_path}")
+        print(f"✅ Đã xuất tệp JSON chuẩn tương thích tại: {output_path}")
 
         cap_nhat_index(
             {
-                "ten_script_tao": SCRIPT_NAME,
-                "ten_thu_muc": ten_thu_muc_goc,
-                "file_nguon": file_nguon_chinh,
-                "file_json_output": ten_file_json,
-                "timestamp": timestamp_iso,
+                "script_tao": f"{SCRIPT_NAME}.py",
+                "file_json_gan_nhap_nhat": ten_file_json,
+                "thoi_gian": timestamp_str,
+                "danh_sach_file_nguon": danh_sach_tep_nguon
             },
             target_dir,
         )
     except Exception as e:
         print(f"Lỗi xuất JSON: {e}")
-
 
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1].lower() == "--gui":
