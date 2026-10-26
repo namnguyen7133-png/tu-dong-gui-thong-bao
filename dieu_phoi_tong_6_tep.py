@@ -237,22 +237,27 @@ class QuanLyVaGieuPhoiFullApp:
     def lay_so_lieu_tu_6_bang(self):
         """Lấy các số có sẵn từ 6 tệp / thư mục bảng 1 tới bảng 6 để so sánh"""
         danh_sach_so = set()
+        print("🔍 [KIỂM TRA] Bắt đầu quét dữ liệu từ các thư mục muc_1 đến muc_6...")
         for i in range(1, 7):
             duong_dan_muc = os.path.join(BASE_DIR, f"muc_{i}")
             if os.path.exists(duong_dan_muc) and os.path.isdir(duong_dan_muc):
+                print(f"   📁 Đã tìm thấy thư mục: {duong_dan_muc}")
                 for file in os.listdir(duong_dan_muc):
                     duong_dan_file = os.path.join(duong_dan_muc, file)
                     if os.path.isfile(duong_dan_file):
                         try:
                             with open(duong_dan_file, "r", encoding="utf-8", errors="ignore") as f:
                                 content = f.read()
-                                # Tìm các số nguyên trong tệp
                                 import re
                                 numbers = re.findall(r'\d+', content)
+                                print(f"      📄 Đọc tệp {file}: tìm thấy {len(numbers)} số.")
                                 for num in numbers:
                                     danh_sach_so.add(int(num))
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            print(f"      ❌ Lỗi đọc tệp {file}: {e}")
+            else:
+                print(f"   ⚠️ Không tìm thấy thư mục: {duong_dan_muc}")
+        print(f"✅ [KIỂM TRA] Tổng số lượng số duy nhất thu thập từ 6 bảng: {len(danh_sach_so)}")
         return danh_sach_so
 
     def xu_ly_va_luu_thuongluu(self):
@@ -263,7 +268,6 @@ class QuanLyVaGieuPhoiFullApp:
             messagebox.showwarning("Cảnh báo", "Vui lòng chọn hoặc nhập tên bệnh tật!")
             return
 
-        # Lưu bệnh tật mới vào tệp danh_sach_benh.txt nếu chưa có
         try:
             os.makedirs(os.path.dirname(self.benh_tat_txt_file), exist_ok=True)
             danh_sach_hien_tai = list(self.combo_benh['values'])
@@ -287,25 +291,19 @@ class QuanLyVaGieuPhoiFullApp:
                 messagebox.showerror("Lỗi", "Số thứ tự giờ/phút phải nằm trong khoảng từ 1 tới 1440!")
                 return
 
-            # Tính chênh lệch ngày tháng năm hiện tại trừ đi ngày tháng năm sinh
             now = datetime.now()
             dt_sinh = datetime(nam_val, thang_val, ngay_val)
             chenh_lech_ngay = (now - dt_sinh).days
             if chenh_lech_ngay < 0:
                 chenh_lech_ngay = abs(chenh_lech_ngay)
 
-            # Lấy thương nhân 24
             thuong_nhan_24 = chenh_lech_ngay * 24
-
-            # Chia lấy phần nguyên và phần dư cho số thứ tự giờ phút (1 tới 1440)
             phan_nguyen = thuong_nhan_24 // gio_val
             phan_du = thuong_nhan_24 % gio_val
 
-            # Chia tiếp cho 1000 hai phần kết quả, lấy phần dư
             du_nguyen = phan_nguyen % 1000
             du_du = phan_du % 1000
 
-            # So sánh với các số có sẵn từ 6 bảng
             cac_so_co_san = self.lay_so_lieu_tu_6_bang()
 
             ket_qua_loc = []
@@ -313,16 +311,14 @@ class QuanLyVaGieuPhoiFullApp:
             
             for val in [du_nguyen, du_du]:
                 if val in cac_so_co_san:
-                    # Trùng thì bỏ
                     giu_nguyen = False
                     ket_qua_loc.append(f"Trùng ({val}) -> Bỏ")
                 else:
-                    # Mới thì giữ lại
                     ket_qua_loc.append(f"Mới ({val}) -> Giữ")
 
             trang_thai_str = " | ".join(ket_qua_loc)
             cot_1_val = f"Thương: {thuong_nhan_24} | Nguyên:{phan_nguyen}(%{1000}={du_nguyen}) | Dư:{phan_du}(%{1000}={du_du})"
-            thoi_gian_nhap_str = f"Ngày {ng}/{th}/{nam} - Giờ {gio_val}:{phut_val}"
+            thoi_gian_nhap_str = f"Ngày {ngay_val}/{thang_val}/{nam_val} - Giờ {gio_val}:{phut_val}"
 
             dong_ghi = f"{cot_1_val} | Tên:{ten_chon} | {thoi_gian_nhap_str} | Bệnh:{benh_chon} | TrạngThái:{trang_thai_str}\n"
 
@@ -434,30 +430,43 @@ class QuanLyVaGieuPhoiFullApp:
         sub_folders_data = []
         danh_sach_file_quet = []
 
+        print("🚀 [KIỂM TRA] Bắt đầu quét các thư mục con từ muc_1 đến muc_6...")
         for i in range(1, 7):
             ten_thu_muc = f"muc_{i}"
             duong_dan_con = os.path.join(BASE_DIR, ten_thu_muc)
             if os.path.exists(duong_dan_con) and os.path.isdir(duong_dan_con):
                 sub_folders_data.append(ten_thu_muc)
+                print(f"   📁 Thư mục nguồn tồn tại: {duong_dan_con}")
                 for file in os.listdir(duong_dan_con):
                     duong_dan_file = os.path.join(duong_dan_con, file)
                     if os.path.isfile(duong_dan_file):
                         danh_sach_file_quet.append(duong_dan_file)
+                        print(f"      📄 Tìm thấy tệp nguồn quét: {file}")
                     if file.lower().endswith(".py") and not "chay" in file.lower():
                         try:
                             cmd = [sys.executable, duong_dan_file]
                             process = subprocess.Popen(cmd, cwd=duong_dan_con)
                             process.wait(timeout=30)
                             dem_thanh_cong += 1
-                        except Exception:
-                            pass
+                            print(f"      ▶️ Thực thi thành công script con: {file}")
+                        except Exception as e:
+                            print(f"      ❌ Lỗi thực thi script con {file}: {e}")
+            else:
+                print(f"   ⚠️ Thư mục không tồn tại: {duong_dan_con}")
+        print(f"✅ [KIỂM TRA] Quét xong. Tổng số tệp nguồn ghi nhận: {len(danh_sach_file_quet)}")
         return dem_thanh_cong, sub_folders_data, danh_sach_file_quet
 
     def run_background_task(self, is_headless=False):
         try:
+            print("⚙️ [CHẠY NGẦM] Bắt đầu tác vụ tự động / Headless trên GitHub...")
             thu_muc_luu = self.thu_muc_luu_hien_tai
             os.makedirs(thu_muc_luu, exist_ok=True)
             self.save_config(thu_muc_luu)
+
+            print(f"   - Thư mục lưu kết quả đích: {thu_muc_luu}")
+            print(f"   - Tệp lịch sử mẫu: {self.template_txt_file} (Tồn tại: {os.path.exists(self.template_txt_file)})")
+            print(f"   - Tệp THUONGLUU.txt: {self.thuong_luu_txt_file} (Tồn tại: {os.path.exists(self.thuong_luu_txt_file)})")
+            print(f"   - Tệp danh sách bệnh: {self.benh_tat_txt_file} (Tồn tại: {os.path.exists(self.benh_tat_txt_file)})")
 
             dem_thanh_cong, sub_folders_data, danh_sach_file_quet = self.thuc_thi_cac_chuong_trinh_con()
             if os.path.exists(self.template_txt_file):
@@ -526,7 +535,7 @@ class QuanLyVaGieuPhoiFullApp:
                 out_path = os.path.join(thu_muc_luu, default_output_filename)
                 with open(out_path, "w", encoding="utf-8") as f:
                     json.dump(payload, f, ensure_ascii=False, indent=4)
-                print(f"[{SCRIPT_NAME}.py] Đã tự động xuất JSON ngầm tại: {out_path}")
+                print(f"[{SCRIPT_NAME}.py] ✅ Đã tự động xuất JSON ngầm tại: {out_path}")
             else:
                 out_path = filedialog.asksaveasfilename(
                     title="Lưu tệp JSON chuẩn",
@@ -543,7 +552,7 @@ class QuanLyVaGieuPhoiFullApp:
 
         except Exception as e:
             if is_headless:
-                print(f"[{SCRIPT_NAME}.py] Lỗi chạy ngầm: {e}")
+                print(f"[{SCRIPT_NAME}.py] ❌ Lỗi chạy ngầm: {e}")
                 sys.exit(1)
             else:
                 messagebox.showerror("Lỗi", f"Lỗi thực thi: {e}")
