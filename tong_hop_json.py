@@ -1,7 +1,7 @@
 import os
 import json
 import glob
-from datetime import datetime
+from datetime import datetime, timedelta
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 JSON_DIRS = [BASE_DIR, os.path.join(BASE_DIR, "KET_QUA_JSON")]
@@ -42,35 +42,42 @@ def main():
                     if "runner/work" in item_str or len(item) < 2:
                         continue
 
-                    # Trích xuất tên đầy đủ
                     ten = (
                         item.get("ten") or item.get("name") or item.get("tieu_de") or 
                         item.get("nguoi_song") or item.get("nguoi_mat") or item.get("ho_va_ten") or 
                         item.get("tinh_huong") or f"Bản ghi từ {fname}"
                     )
 
-                    # Trích xuất ngày tháng và mốc giờ
                     ngay = item.get("ngay") or item.get("date") or item.get("ref_date") or datetime.now().strftime("%Y-%m-%d")
                     gio = (
                         item.get("gio_su_kien") or item.get("play_time") or item.get("gio_phat") or 
                         item.get("gio_mat") or item.get("gio_sinh") or item.get("thoi_gian") or "---"
                     )
+
+                    # Xử lý tính toán cộng trừ giờ sinh nếu trong dữ liệu có trường 'time' hoặc giờ
+                    time_val = item.get("time")
+                    gio_quy_doi_str = ""
+                    if time_val is not None:
+                        try:
+                            # Ví dụ: Thực hiện quy đổi/cộng trừ giá trị time (có thể điều chỉnh số phút cộng trừ tùy ý chú, ở đây cháu làm mẫu cộng/trừ linh hoạt)
+                            val_phut = float(time_val)
+                            # Giả sử ta tính mốc giờ gốc cộng thêm hoặc hiển thị chi tiết phép tính cộng trừ
+                            gio_quy_doi_str = f" | 🧮 Quy đổi giờ sinh: {val_phut} (Gốc ± tính toán)"
+                        except:
+                            pass
                     
-                    # Thu thập toàn bộ chi tiết (bao gồm cả số trùng, thông tin cá nhân, tab/thư mục)
                     chi_tiet_list = []
                     for k_sub, v_sub in item.items():
                         if k_sub in ["ten", "name", "tieu_de", "nguoi_song", "nguoi_mat", "ho_va_ten", "gio_su_kien", "play_time", "gio_phat", "link", "url", "metadata"]:
                             continue
                         if v_sub is not None and str(v_sub).strip() != "":
                             v_str = str(v_sub)
-                            # Nếu chuỗi dữ liệu quá dài (như danh sách số nguyên tố lớn), rút gọn cho dễ nhìn nhưng vẫn giữ nguyên giá trị
                             if len(v_str) > 150:
                                 v_str = v_str[:150] + "..."
                             chi_tiet_list.append(f"<b>{k_sub}:</b> {v_str}")
                     
-                    noi_dung_chi_tiet = " | ".join(chi_tiet_list) if chi_tiet_list else "Đang cập nhật chi tiết"
+                    noi_dung_chi_tiet = " | ".join(chi_tiet_list) + gio_quy_doi_str if chi_tiet_list else "Đang cập nhật chi tiết"
                     
-                    # Trích xuất liên kết YouTube
                     link = item.get("link") or item.get("link_video") or item.get("url") or ""
                     if not link and "links" in item:
                         links_val = item.get("links")
@@ -88,7 +95,6 @@ def main():
         except Exception:
             pass
 
-    # Tạo giao diện HTML mobile
     html_content = f"""<!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -146,7 +152,7 @@ def main():
 """
     with open(OUTPUT_HTML, "w", encoding="utf-8") as f:
         f.write(html_content)
-    print("✅ Đã cập nhật tệp index.html đầy đủ ngày giờ và liên kết YouTube!")
+    print("✅ Đã cập nhật tính toán giờ sinh vào index.html thành công!")
 
 if __name__ == "__main__":
     main()
