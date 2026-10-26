@@ -504,4 +504,67 @@ class QuanLyVaGieuPhoiFullApp:
                     "ngay_sinh": "2000-01-01",
                     "gio_sinh": "00:00",
                     "chi_so": "Ngày",
-                    "gia_tri_goc": 1
+                    "gia_tri_goc": 100,
+                    "phan_nguyen": 10,
+                    "mod_1000_nguyen": 10,
+                    "trung_nguyen": 10 in ref_numbers_all,
+                    "phan_du": 0,
+                    "mod_1000_du": 0,
+                    "trung_du": 0 in ref_numbers_all,
+                    "can_bu": 5,
+                    "thong_tin_du": f"Hết vòng đến bệnh: {rec['benh_mac']}",
+                    "canh_bao_col": "Không cảnh báo",
+                    "moc_thoi_gian": now.strftime("%Y-%m-%d %H:%M:%S"),
+                    "link_video": "https://www.youtube.com/watch?v=example",
+                    "chi_tiet_trung_khop": "Nguyên: 10 (%1000=10) | Dư: 0 (%1000=0)"
+                }
+                ket_qua_tong_ket.append(item_ket_qua)
+
+            payload = {
+                "metadata": {
+                    "script_su_dung": f"{SCRIPT_NAME}.py",
+                    "timestamp": now.strftime("%Y-%m-%d %H:%M:%S"),
+                    "date_minus_7_days": (now - timedelta(days=7)).strftime("%Y-%m-%d"),
+                    "date_plus_7_days": (now + timedelta(days=7)).strftime("%Y-%m-%d"),
+                    "thu_muc_nguon": self.source_dir_name,
+                    "file_nguon_quet": danh_sach_file_quet
+                },
+                "people": lich_su_records,
+                "ref_numbers": ref_numbers_all,
+                "tabs_data": sub_folders_data,
+                "ket_qua_tong_ket": ket_qua_tong_ket
+            }
+
+            if is_headless:
+                out_path = os.path.join(thu_muc_luu, default_output_filename)
+                with open(out_path, "w", encoding="utf-8") as f:
+                    json.dump(payload, f, ensure_ascii=False, indent=4)
+                print(f"[{SCRIPT_NAME}.py] ✅ Đã tự động xuất JSON ngầm tại: {out_path}")
+            else:
+                out_path = filedialog.asksaveasfilename(
+                    title="Lưu tệp JSON chuẩn",
+                    initialdir=thu_muc_luu,
+                    initialfile=default_output_filename,
+                    defaultextension=".json",
+                    filetypes=[("JSON Files", "*.json"), ("All Files", "*.*")]
+                )
+                if not out_path:
+                    return
+                with open(out_path, "w", encoding="utf-8") as f:
+                    json.dump(payload, f, ensure_ascii=False, indent=4)
+                messagebox.showinfo("Thành công", f"Đã xuất JSON tại:\n{out_path}")
+
+        except Exception as e:
+            if is_headless:
+                print(f"[{SCRIPT_NAME}.py] ❌ Lỗi chạy ngầm: {e}")
+                sys.exit(1)
+            else:
+                messagebox.showerror("Lỗi", f"Lỗi thực thi: {e}")
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1].lower() == "--gui":
+        root = tk.Tk()
+        app = QuanLyVaGieuPhoiFullApp(root, headless=False)
+        root.mainloop()
+    else:
+        QuanLyVaGieuPhoiFullApp(None, headless=True)
