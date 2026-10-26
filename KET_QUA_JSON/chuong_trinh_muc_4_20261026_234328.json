@@ -1,0 +1,18 @@
+{
+    "metadata": {
+        "script_su_dung": "chuong_trinh.py",
+        "timestamp": "2026-10-26 23:43:28",
+        "date_minus_7_days": "2026-10-19",
+        "date_plus_7_days": "2026-11-02",
+        "thu_muc_nguon": "muc_4",
+        "file_nguon_quet": []
+    },
+    "people": [],
+    "ref_numbers": [
+        123,
+        456,
+        789
+    ],
+    "tabs_data": [],
+    "ket_qua_tong_ket": []
+}
