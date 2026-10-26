@@ -17,7 +17,6 @@ def main():
 
     for jf in json_files:
         fname = os.path.basename(jf)
-        # Bỏ qua các tệp hệ thống không cần thiết
         if fname.startswith("config_") or fname.startswith("index_") or fname == "cau_hinh_duong_dan.json" or fname == "aggregated_output.json":
             continue
         try:
@@ -27,7 +26,6 @@ def main():
                 if isinstance(data, list):
                     items = data
                 elif isinstance(data, dict):
-                    # Nếu trong dict có các mảng dữ liệu con thì lấy, không thì lấy chính dict đó
                     found_list = False
                     for k, v in data.items():
                         if isinstance(v, list):
@@ -40,46 +38,48 @@ def main():
                     if not isinstance(item, dict):
                         continue
                     
-                    # Bỏ qua các bản ghi rác chứa metadata hoặc đường dẫn hệ thống GitHub
                     item_str = str(item)
-                    if "runner/work" in item_str or "ref_numbers" in item_str or len(item) < 2:
+                    if "runner/work" in item_str or len(item) < 2:
                         continue
 
-                    # Trích xuất thông tin tên sạch sẽ
+                    # Trích xuất tên đầy đủ
                     ten = (
                         item.get("ten") or item.get("name") or item.get("tieu_de") or 
                         item.get("nguoi_song") or item.get("nguoi_mat") or item.get("ho_va_ten") or 
-                        item.get("tinh_huong")
+                        item.get("tinh_huong") or f"Bản ghi từ {fname}"
                     )
-                    if not ten:
-                        continue # Nếu không có tên chuẩn thì bỏ qua
 
-                    # Trích xuất mốc giờ
+                    # Trích xuất ngày tháng và mốc giờ
+                    ngay = item.get("ngay") or item.get("date") or item.get("ref_date") or datetime.now().strftime("%Y-%m-%d")
                     gio = (
                         item.get("gio_su_kien") or item.get("play_time") or item.get("gio_phat") or 
                         item.get("gio_mat") or item.get("gio_sinh") or item.get("thoi_gian") or "---"
                     )
                     
-                    # Chỉ lấy các thông tin chi tiết thực sự có ích, loại bỏ mã số thô
+                    # Thu thập toàn bộ chi tiết (bao gồm cả số trùng, thông tin cá nhân, tab/thư mục)
                     chi_tiet_list = []
                     for k_sub, v_sub in item.items():
-                        if k_sub in ["ten", "name", "tieu_de", "nguoi_song", "nguoi_mat", "ho_va_ten", "gio_su_kien", "play_time", "gio_phat", "link", "url", "ref_numbers", "metadata"]:
+                        if k_sub in ["ten", "name", "tieu_de", "nguoi_song", "nguoi_mat", "ho_va_ten", "gio_su_kien", "play_time", "gio_phat", "link", "url", "metadata"]:
                             continue
                         if v_sub is not None and str(v_sub).strip() != "":
-                            # Nếu giá trị là một chuỗi số quá dài thì bỏ qua không hiển thị
                             v_str = str(v_sub)
-                            if len(v_str) > 100:
-                                continue
+                            # Nếu chuỗi dữ liệu quá dài (như danh sách số nguyên tố lớn), rút gọn cho dễ nhìn nhưng vẫn giữ nguyên giá trị
+                            if len(v_str) > 150:
+                                v_str = v_str[:150] + "..."
                             chi_tiet_list.append(f"<b>{k_sub}:</b> {v_str}")
                     
-                    if not chi_tiet_list:
-                        continue
-
-                    noi_dung_chi_tiet = " | ".join(chi_tiet_list)
+                    noi_dung_chi_tiet = " | ".join(chi_tiet_list) if chi_tiet_list else "Đang cập nhật chi tiết"
+                    
+                    # Trích xuất liên kết YouTube
                     link = item.get("link") or item.get("link_video") or item.get("url") or ""
+                    if not link and "links" in item:
+                        links_val = item.get("links")
+                        if isinstance(links_val, list) and len(links_val) > 0:
+                            link = str(links_val[0])
 
                     all_results.append({
                         "ten": str(ten),
+                        "ngay": str(ngay),
                         "gio": str(gio),
                         "chi_tiet": noi_dung_chi_tiet,
                         "link": str(link),
@@ -88,7 +88,7 @@ def main():
         except Exception:
             pass
 
-    # Tạo mã HTML hiển thị gọn gàng, sạch đẹp
+    # Tạo giao diện HTML mobile
     html_content = f"""<!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -103,16 +103,16 @@ def main():
         .card {{ background-color: #1E1E2E; border-left: 6px solid #00FFC8; border-radius: 8px; padding: 14px; margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }}
         .card-header {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }}
         .card-title {{ font-weight: bold; color: #FFD700; font-size: 17px; }}
-        .card-time {{ background-color: #FF9800; color: #000; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 14px; }}
+        .card-time {{ background-color: #FF9800; color: #000; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 13px; }}
         .card-body {{ color: #DDD; margin-top: 6px; font-size: 14px; line-height: 1.5; word-break: break-word; }}
         .card-source {{ font-size: 12px; color: #777; margin-top: 8px; }}
-        .link-btn {{ display: inline-block; margin-top: 10px; padding: 8px 14px; background-color: #0088CC; color: #FFFFFF; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 14px; }}
+        .link-btn {{ display: inline-block; margin-top: 10px; padding: 10px 16px; background-color: #FF0000; color: #FFFFFF; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 14px; }}
     </style>
 </head>
 <body>
     <h1>📊 TRA CỨU KẾT QUẢ ĐIỆN THOẠI</h1>
     <div class="sub-header">Cập nhật: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | Tổng số: {len(all_results)} kết quả</div>
-    <input type="text" id="searchInput" class="search-box" placeholder="🔍 Gõ tìm kiếm tên, mốc giờ..." onkeyup="filterCards()">
+    <input type="text" id="searchInput" class="search-box" placeholder="🔍 Gõ tìm kiếm tên, ngày, giờ, số..." onkeyup="filterCards()">
     <div id="container">
 """
 
@@ -121,11 +121,11 @@ def main():
         <div class="card">
             <div class="card-header">
                 <span class="card-title">#{idx}. {item['ten']}</span>
-                <span class="card-time">⏰ {item['gio']}</span>
+                <span class="card-time">📅 {item['ngay']} | ⏰ {item['gio']}</span>
             </div>
             <div class="card-body">📋 {item['chi_tiet']}</div>
-            <div class="card-source">📄 Nguồn: {item['file_nguon']}</div>
-            {"<a class='link-btn' href='" + item['link'] + "' target='_blank'>▶ Xem Video YouTube</a>" if item['link'] and item['link'].startswith("http") else ""}
+            <div class="card-source">📁 Tab/Nguồn: {item['file_nguon']}</div>
+            {"<a class='link-btn' href='" + item['link'] + "' target='_blank'>▶ Mở & Phát YouTube</a>" if item['link'] and item['link'].startswith("http") else ""}
         </div>
 """
 
@@ -146,7 +146,7 @@ def main():
 """
     with open(OUTPUT_HTML, "w", encoding="utf-8") as f:
         f.write(html_content)
-    print("✅ Đã làm sạch và cập nhật index.html thành công!")
+    print("✅ Đã cập nhật tệp index.html đầy đủ ngày giờ và liên kết YouTube!")
 
 if __name__ == "__main__":
     main()
