@@ -17,6 +17,7 @@ def main():
 
     for jf in json_files:
         fname = os.path.basename(jf)
+        # Bỏ qua các tệp hệ thống không cần thiết
         if fname.startswith("config_") or fname.startswith("index_") or fname == "cau_hinh_duong_dan.json" or fname == "aggregated_output.json":
             continue
         try:
@@ -26,45 +27,55 @@ def main():
                 if isinstance(data, list):
                     items = data
                 elif isinstance(data, dict):
-                    # Quét toàn bộ các nhánh dữ liệu trong tệp JSON
+                    # Nếu trong dict có các mảng dữ liệu con thì lấy, không thì lấy chính dict đó
+                    found_list = False
                     for k, v in data.items():
                         if isinstance(v, list):
                             items.extend(v)
-                        elif isinstance(v, dict):
-                            items.append(v)
-                    # Thêm chính bản gốc nếu nó chứa thông tin đơn
-                    items.append(data)
+                            found_list = True
+                    if not found_list:
+                        items.append(data)
 
                 for item in items:
                     if not isinstance(item, dict):
                         continue
                     
-                    # Lọc bỏ các dict quá ngắn hoặc không có nội dung ý nghĩa
-                    if len(item) < 2:
+                    # Bỏ qua các bản ghi rác chứa metadata hoặc đường dẫn hệ thống GitHub
+                    item_str = str(item)
+                    if "runner/work" in item_str or "ref_numbers" in item_str or len(item) < 2:
                         continue
 
-                    # Trích xuất linh hoạt mọi tên gọi
+                    # Trích xuất thông tin tên sạch sẽ
                     ten = (
                         item.get("ten") or item.get("name") or item.get("tieu_de") or 
                         item.get("nguoi_song") or item.get("nguoi_mat") or item.get("ho_va_ten") or 
-                        item.get("tinh_huong") or f"Bản ghi từ {fname}"
+                        item.get("tinh_huong")
                     )
-                    
+                    if not ten:
+                        continue # Nếu không có tên chuẩn thì bỏ qua
+
                     # Trích xuất mốc giờ
                     gio = (
                         item.get("gio_su_kien") or item.get("play_time") or item.get("gio_phat") or 
                         item.get("gio_mat") or item.get("gio_sinh") or item.get("thoi_gian") or "---"
                     )
                     
-                    # Tự động gom TẤT CẢ các thông tin chi tiết khác có trong bản ghi thành một đoạn nội dung đầy đủ
+                    # Chỉ lấy các thông tin chi tiết thực sự có ích, loại bỏ mã số thô
                     chi_tiet_list = []
                     for k_sub, v_sub in item.items():
-                        if k_sub in ["ten", "name", "tieu_de", "nguoi_song", "nguoi_mat", "ho_va_ten", "gio_su_kien", "play_time", "gio_phat", "link", "url"]:
+                        if k_sub in ["ten", "name", "tieu_de", "nguoi_song", "nguoi_mat", "ho_va_ten", "gio_su_kien", "play_time", "gio_phat", "link", "url", "ref_numbers", "metadata"]:
                             continue
                         if v_sub is not None and str(v_sub).strip() != "":
-                            chi_tiet_list.append(f"<b>{k_sub}:</b> {v_sub}")
+                            # Nếu giá trị là một chuỗi số quá dài thì bỏ qua không hiển thị
+                            v_str = str(v_sub)
+                            if len(v_str) > 100:
+                                continue
+                            chi_tiet_list.append(f"<b>{k_sub}:</b> {v_str}")
                     
-                    noi_dung_chi_tiet = " | ".join(chi_tiet_list) if chi_tiet_list else "Đang cập nhật thông tin chi tiết"
+                    if not chi_tiet_list:
+                        continue
+
+                    noi_dung_chi_tiet = " | ".join(chi_tiet_list)
                     link = item.get("link") or item.get("link_video") or item.get("url") or ""
 
                     all_results.append({
@@ -77,6 +88,7 @@ def main():
         except Exception:
             pass
 
+    # Tạo mã HTML hiển thị gọn gàng, sạch đẹp
     html_content = f"""<!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -100,7 +112,7 @@ def main():
 <body>
     <h1>📊 TRA CỨU KẾT QUẢ ĐIỆN THOẠI</h1>
     <div class="sub-header">Cập nhật: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | Tổng số: {len(all_results)} kết quả</div>
-    <input type="text" id="searchInput" class="search-box" placeholder="🔍 Gõ tìm kiếm bất kỳ thông tin gì..." onkeyup="filterCards()">
+    <input type="text" id="searchInput" class="search-box" placeholder="🔍 Gõ tìm kiếm tên, mốc giờ..." onkeyup="filterCards()">
     <div id="container">
 """
 
@@ -134,7 +146,7 @@ def main():
 """
     with open(OUTPUT_HTML, "w", encoding="utf-8") as f:
         f.write(html_content)
-    print("✅ Đã cập nhật index.html với đầy đủ thông tin chi tiết!")
+    print("✅ Đã làm sạch và cập nhật index.html thành công!")
 
 if __name__ == "__main__":
     main()
