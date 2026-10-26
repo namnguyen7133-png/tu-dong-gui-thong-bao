@@ -3,128 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Báo Cáo Giờ Phát & Dữ Liệu Tự Động</title>
+    <title>Tra Cứu Kết Quả - Mobile</title>
     <style>
-        body { 
-            background-color: #121212; 
-            color: #e0e0e0; 
-            font-family: Arial, sans-serif; 
-            text-align: center; 
-            padding: 15px; 
+        body {
+            background-color: #121212;
+            color: #E0E0E0;
+            font-family: Arial, sans-serif;
             margin: 0;
+            padding: 10px;
+            font-size: 16px;
         }
-        h1 { font-size: 1.4rem; color: #00bcd4; }
-        .card { 
-            background: #1e1e1e; 
-            border: 1px solid #333; 
-            padding: 15px; 
-            border-radius: 8px; 
-            max-width: 100%; 
-            margin: 10px auto; 
-            text-align: left; 
-            box-sizing: border-box;
-        }
-        .success { color: #4caf50; font-weight: bold; }
-        button { 
-            background: #00bcd4; 
-            color: #000; 
-            border: none; 
-            padding: 12px 20px; 
-            font-weight: bold; 
-            border-radius: 5px; 
-            cursor: pointer; 
-            margin-bottom: 15px; 
-            font-size: 1rem;
-        }
-        pre { 
-            background: #2d2d2d; 
-            padding: 10px; 
-            border-radius: 5px; 
-            overflow-x: auto; 
-            font-size: 0.85rem; 
+        h1 {
             color: #00FFC8;
+            font-size: 18px;
+            text-align: center;
         }
-        hr { border-color: #444; }
+        .search-box {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 6px;
+            border: 1px solid #444;
+            background-color: #222;
+            color: #FFF;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+        }
+        .card {
+            background-color: #1E1E2E;
+            border-left: 5px solid #FF9800;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        .card-title {
+            font-weight: bold;
+            color: #FFD700;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        .alert {
+            color: #FF6B6B;
+            font-weight: bold;
+            margin-top: 5px;
+            background: #2A1515;
+            padding: 5px;
+            border-radius: 4px;
+        }
+        .link-btn {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 8px 12px;
+            background-color: #0088CC;
+            color: #FFFFFF;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
-    <h1>📊 BÁO CÁO TỰ ĐỘNG GOOGLE DRIVE</h1>
-    <button onclick="location.reload()">🔄 Làm mới dữ liệu</button>
-    <div class="card" id="content">Đang tải và lọc dữ liệu từ hệ thống...</div>
+    <h1>📊 TRA CỨU KẾT QUẢ ĐIỆN THOẠI</h1>
+    <div style="font-size: 13px; color: #888; text-align: center; margin-bottom: 10px;">
+        Cập nhật: 2026-10-26 12:50:49 | Tổng số: 0 kết quả
+    </div>
 
+    <input type="text" id="searchInput" class="search-box" placeholder="🔍 Gõ tìm kiếm tên, bệnh lý..." onkeyup="filterCards()">
+
+    <div id="container">
+
+    </div>
     <script>
-        // Gọi chính xác tệp aggregated_output.json trên GitHub
-        fetch('aggregated_output.json')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error("Không thể tìm thấy tệp dữ liệu.");
-                }
-                return response.json();
-            })
-            .then(data => {
-                const container = document.getElementById('content');
-                let html = '';
-
-                let items = [];
-                if (Array.isArray(data)) {
-                    items = data;
-                } else if (data && typeof data === 'object') {
-                    html += `<p class="success">🟢 Trạng thái: Đọc dữ liệu thành công</p>`;
-                    if (data.thoi_gian_chay) {
-                        html += `<p>⏱️ Thời gian cập nhật hệ thống: <b>${data.thoi_gian_chay}</b></p>`;
-                    }
-                    html += `<hr>`;
-                    items = data.chi_tiet || data.danh_sach || data.ket_qua_tong_ket || [];
-                }
-
-                // Thiết lập mốc thời gian lọc: Từ 7 ngày trước đến hiện tại, hôm nay chỉ lấy từ giờ phút này trở đi
-                const now = new Date();
-                const bayNgayTruoc = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-                const itemsHopLe = items.filter(item => {
-                    const timeStr = item.thoi_gian || item.ngay_gio || item.time;
-                    if (!timeStr) return false;
-                    
-                    const itemTime = new Date(timeStr);
-                    if (isNaN(itemTime.getTime())) return false;
-
-                    // Kiểm tra điều kiện: Nằm trong khoảng từ 7 ngày trước đến hiện tại
-                    if (itemTime >= bayNgayTruoc && itemTime <= now) {
-                        // Nếu thuộc ngày hôm nay, kiểm tra xem đã qua giờ phút hiện tại chưa
-                        if (itemTime.toDateString() === now.toDateString()) {
-                            if (itemTime < now) {
-                                return false; // Bỏ qua các giờ trong quá khứ của ngày hôm nay
-                            }
-                        }
-                        return true;
-                    }
-                    return false;
-                });
-
-                html += `<p>📌 Số lượng mục hiển thị sau khi lọc (7 ngày qua & từ giờ phút hiện tại trở đi): <b>${itemsHopLe.length}</b></p><hr>`;
-
-                if (itemsHopLe.length > 0) {
-                    itemsHopLe.forEach((item, index) => {
-                        html += `<h3>📌 Mục hợp lệ #${index + 1}</h3>`;
-                        html += `<pre>${JSON.stringify(item, null, 2)}</pre>`;
-                        html += `<hr>`;
-                    });
-                } else {
-                    html += `<p>Không có nội dung nào phù hợp trong khung giờ hiện tại.</p>`;
-                }
-
-                container.innerHTML = html;
-            })
-            .catch(err => {
-                document.getElementById('content').innerHTML = `
-                    <span style="color:red; font-weight:bold;">⚠️ Chưa tìm thấy hoặc lỗi đọc tệp 'aggregated_output.json'!</span><br><br>
-                    <p style="font-size: 0.9rem; color: #ccc;">Nguyên nhân:</p>
-                    <ul style="font-size: 0.85rem; color: #ccc; text-align: left;">
-                        <li>Tệp 'aggregated_output.json' chưa nằm ở thư mục gốc trên GitHub.</li>
-                        <li>Đang chờ GitHub Pages cập nhật lại trang web.</li>
-                    </ul>
-                `;
-            });
+        function filterCards() {
+            var input = document.getElementById('searchInput').value.toLowerCase();
+            var cards = document.getElementsByClassName('card');
+            for (var i = 0; i < cards.length; i++) {
+                var text = cards[i].innerText.toLowerCase();
+                cards[i].style.display = text.includes(input) ? "" : "none";
+            }
+        }
     </script>
 </body>
 </html>
