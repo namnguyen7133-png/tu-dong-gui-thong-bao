@@ -1,300 +1,557 @@
 # -*- coding: utf-8 -*-
-from datetime import datetime, timedelta
-import json
 import os
-import re
 import sys
-import time
+import json
+import subprocess
+from datetime import datetime, timedelta
+import tkinter as tk
+from tkinter import ttk, filedialog, messagebox
 
-def thu_muc_chuong_trinh():
-    if getattr(sys, "frozen", False):
-        return os.path.dirname(os.path.abspath(sys.executable))
-    return os.path.dirname(os.path.abspath(__file__))
-
-thu_muc = thu_muc_chuong_trinh()
+# 1. Định danh động theo tên tệp Python hiện tại
 SCRIPT_NAME = os.path.splitext(os.path.basename(__file__))[0]
-CONFIG_FILE = os.path.join(thu_muc, f"config_{SCRIPT_NAME}.json")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-def doc_cau_hinh():
-    """Nhận đường dẫn từ tham số dòng lệnh (--outDir) hoặc mặc định về thư mục tương đối KET_QUA_JSON."""
-    thu_muc_dich = os.path.join(thu_muc, "KET_QUA_JSON")
-
-    for i in range(len(sys.argv) - 1):
-        if sys.argv[i] == "--outDir":
-            thu_muc_dich = sys.argv[i + 1]
-            break
-
-    try:
-        os.makedirs(thu_muc_dich, exist_ok=True)
-    except Exception:
-        pass
-    return thu_muc_dich
-
-def luu_cau_hinh(duong_dan):
-    try:
-        data = {
-            "ten_script": SCRIPT_NAME,
-            "thu_muc_luu": duong_dan,
-            "cap_nhat": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        }
-        with open(CONFIG_FILE, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
-    except Exception as e:
-        print(f"Lỗi lưu config: {e}")
-
+# Thư mục lưu kết quả chuẩn trên GitHub / Local
+THU_MUC_MAC_DINH = os.path.join(BASE_DIR, "KET_QUA_JSON")
+CONFIG_FILE = os.path.join(BASE_DIR, f"config_{SCRIPT_NAME}.json")
 DAYS_TO_KEEP = 7
-p_nguoi = os.path.join(thu_muc, "DSNGUOINHA.txt")
 
-def tim_file_so_chia():
-    for file_trong_thu_muc in os.listdir(thu_muc):
-        if file_trong_thu_muc.lower().startswith("bang_") and file_trong_thu_muc.lower().endswith(
-            (".txt", ".html", ".vtt")
-        ):
-            return os.path.join(thu_muc, file_trong_thu_muc)
-    return ""
+class QuanLyVaGieuPhoiFullApp:
+    def __init__(self, root, headless=False):
+        self.root = root
+        self.config = self.load_config()
+        self.thu_muc_luu_hien_tai = self.config.get("thu_muc_luu", THU_MUC_MAC_DINH)
+        self.template_txt_file = os.path.join(self.thu_muc_luu_hien_tai, f"template_lich_su_{SCRIPT_NAME}.txt")
+        self.thuong_luu_txt_file = os.path.join(self.thu_muc_luu_hien_tai, "THUONGLUU.txt")
+        self.benh_tat_txt_file = os.path.join(self.thu_muc_luu_hien_tai, "danh_sach_benh.txt")
+        self.index_file_dynamic = os.path.join(self.thu_muc_luu_hien_tai, f"index_{SCRIPT_NAME}_quan_ly.json")
+        self.source_dir_name = os.path.basename(BASE_DIR) or "ThuMucGoc"
 
-def doc_txt_raw(path):
-    if not os.path.exists(path):
-        return ""
-    for enc in ("utf-8-sig", "utf-8", "cp1258", "cp1252"):
+        if headless:
+            self.run_background_task(is_headless=True)
+            return
+
+        self.root.title(f"Hệ Thống Điều Phối & Quản Lý Tra Cứu ({SCRIPT_NAME}.py)")
+        self.root.geometry("1150x900")
+        self.setup_ui()
+
+    def load_config(self):
+        if os.path.exists(CONFIG_FILE):
+            try:
+                with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception:
+                pass
+        return {
+            "script_su_dung": SCRIPT_NAME,
+            "thu_muc_luu": THU_MUC_MAC_DINH,
+        }
+
+    def save_config(self, thu_muc_luu):
         try:
-            with open(path, "r", encoding=enc) as f:
-                return f.read()
-        except UnicodeDecodeError:
-            continue
-    with open(path, "r", encoding="utf-8", errors="ignore") as f:
-        return f.read()
+            data = {
+                "script_su_dung": SCRIPT_NAME,
+                "thu_muc_luu": thu_muc_luu,
+                "cap_nhat_moi_nhat": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            }
+            with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=4)
+        except Exception as e:
+            print(f"Lỗi lưu cấu hình: {e}")
 
-def doc_danh_sach_nguoi_tu_chuoi(noi_dung):
-    people = []
-    for dong in noi_dung.splitlines():
-        dong = dong.strip()
-        if not dong or dong.startswith("#"):
-            continue
-        parts = [x.strip() for x in dong.split("|")]
-        if len(parts) >= 2:
-            dob_str = parts[1]
-            time_str = parts[2] if len(parts) >= 3 else "00:00:00"
-            people.append({"name": parts[0], "dob": dob_str, "time": time_str})
-    return people
+    def setup_ui(self):
+        # Tạo Notebook chứa các Tab
+        self.notebook = ttk.Notebook(self.root)
+        self.notebook.pack(fill="both", expand=True, padx=5, pady=5)
 
-def doc_cac_so_va_gio_phut_tu_txt(path):
-    ket_qua_mapping = {}
-    danh_sach_so = []
-    danh_sach_link = []
-    if not os.path.exists(path):
-        return danh_sach_so, ket_qua_mapping, danh_sach_link
+        # ================= TAB 1: Quản lý & Lịch sử gốc =================
+        self.tab_main = ttk.Frame(self.notebook)
+        self.notebook.add(self.tab_main, text=" 📊 Quản Lý & Lịch Sử ")
+        self.setup_tab_main()
 
-    noi_dung = doc_txt_raw(path)
-    for dong in noi_dung.splitlines():
-        dong = dong.strip()
-        if not dong or dong.startswith("#"):
-            continue
+        # ================= TAB 2: Tab Mới - Tính Toán & Lưu Trữ Bệnh Tật =================
+        self.tab_calc = ttk.Frame(self.notebook)
+        self.notebook.add(self.tab_calc, text=" 📝 Tính Toán & Lưu Trữ THUONGLUU ")
+        self.setup_tab_calc()
 
-        if "http" in dong or ".mp4" in dong or ".avi" in dong:
-            danh_sach_link.append(dong)
+        self.load_data_to_table()
+        self.load_thuongluu_data_to_table()
 
-        parts = [x.strip() for x in dong.split("|")]
-        gio_phut_str = parts[1] if len(parts) >= 2 else ""
+    def setup_tab_main(self):
+        frame_nhap = tk.LabelFrame(self.tab_main, text=" 1. Bộ Lọc, Tìm Kiếm Tên, Thời Gian, Bệnh Lý & Thư Mục ", font=("Arial", 10, "bold"))
+        frame_nhap.pack(fill="x", padx=10, pady=10, ipady=5)
 
-        for token in re.split(r"[\s,;]+", parts[0]):
-            if token.strip().isdigit():
-                val = int(token.strip())
-                danh_sach_so.append(val)
-                if gio_phut_str:
-                    ket_qua_mapping[val] = gio_phut_str
+        tk.Label(frame_nhap, text="Thư mục lưu JSON:", font=("Arial", 9, "bold")).grid(row=0, column=0, sticky="w", padx=5, pady=5)
+        self.lbl_thumuc = tk.Label(frame_nhap, text=self.thu_muc_luu_hien_tai, fg="blue", font=("Arial", 9))
+        self.lbl_thumuc.grid(row=0, column=1, columnspan=3, sticky="w", padx=5, pady=5)
+        tk.Button(frame_nhap, text="📁 Đổi Thư Mục Lưu", bg="#607D8B", fg="white", command=self.chon_thu_muc_luu).grid(row=0, column=4, padx=5, pady=5)
 
-    return danh_sach_so, ket_qua_mapping, danh_sach_link
+        tk.Label(frame_nhap, text="Tìm kiếm tên:", font=("Arial", 9, "bold")).grid(row=1, column=0, sticky="w", padx=5, pady=5)
+        self.ent_tim_kiem_ten = tk.Entry(frame_nhap, width=30)
+        self.ent_tim_kiem_ten.grid(row=1, column=1, columnspan=3, sticky="w", padx=5, pady=5)
+        self.ent_tim_kiem_ten.bind("<KeyRelease>", lambda e: self.filter_table())
 
-def tinh_gio_phat_sinh(time_str):
-    try:
-        parts = time_str.split(":")
-        gio_sinh = int(parts[0]) if len(parts) > 0 else 0
-        phut_sinh = int(parts[1]) if len(parts) > 1 else 0
-    except:
-        gio_sinh = 0
-        phut_sinh = 0
+        labels = ["Năm", "Quý", "Tháng", "Tuần", "Ngày", "Giờ", "Phút"]
+        self.time_entries = {}
+        now = datetime.now()
+        defaults = [now.year, (now.month - 1) // 3 + 1, now.month, now.isocalendar()[1], now.day, now.hour, now.minute]
 
-    if gio_sinh < 24:
-        ket_qua_gio = gio_sinh + (24 - gio_sinh)
-    else:
-        ket_qua_gio = gio_sinh - (0 + gio_sinh)
+        for i, lbl in enumerate(labels):
+            r = 2 if i < 4 else 3
+            c = (i % 4) * 2
+            tk.Label(frame_nhap, text=f"{lbl}:").grid(row=r, column=c, sticky="e", padx=2, pady=2)
+            ent = tk.Entry(frame_nhap, width=8)
+            ent.insert(0, str(defaults[i]))
+            ent.grid(row=r, column=c+1, sticky="w", padx=2, pady=2)
+            self.time_entries[lbl.lower()] = ent
 
-    return f"{abs(ket_qua_gio):02d}:{phut_sinh:02d}:00"
+        tk.Label(frame_nhap, text="Bệnh bị mắc:", font=("Arial", 9, "bold")).grid(row=4, column=0, sticky="w", padx=5, pady=5)
+        self.ent_benh = tk.Entry(frame_nhap, width=40)
+        self.ent_benh.grid(row=4, column=1, columnspan=3, sticky="w", padx=5, pady=5)
 
-def dondep_json_cu(target_dir):
-    if not os.path.exists(target_dir):
-        return
-    thoi_gian_hien_tai = time.time()
-    so_giay_gioi_han = DAYS_TO_KEEP * 86400
-    try:
-        for file in os.listdir(target_dir):
-            if (
-                file.lower().endswith(".json")
-                and not file.lower().startswith("config_")
-                and not file.lower().startswith("index_")
-            ):
-                duong_dan_file = os.path.join(target_dir, file)
-                if os.path.isfile(duong_dan_file):
-                    if thoi_gian_hien_tai - os.path.getmtime(duong_dan_file) > so_giay_gioi_han:
+        frame_btn = tk.Frame(self.tab_main)
+        frame_btn.pack(fill="x", padx=10, pady=5)
+
+        tk.Button(frame_btn, text="💾 Lưu Lịch Sử Vào Tệp Mẫu TXT", bg="#2196F3", fg="white", font=("Arial", 9, "bold"), command=self.luu_vao_file_txt).pack(side="left", padx=5)
+        tk.Button(frame_btn, text="🚀 Chạy Quét & Xuất JSON (Hộp Thoại Lưu Động)", bg="#4CAF50", fg="white", font=("Arial", 9, "bold"), command=lambda: self.run_background_task(is_headless=False)).pack(side="left", padx=5)
+
+        frame_table = tk.LabelFrame(self.tab_main, text=" 2. Bảng Lịch Sử & Kết Quả Tra Cứu ", font=("Arial", 10, "bold"))
+        frame_table.pack(fill="both", expand=True, padx=10, pady=10)
+
+        self.tree = ttk.Treeview(frame_table, columns=("Ten", "ThoiGian", "BenhLy"), show="headings")
+        self.tree.heading("Ten", text="Tên Nhân Sự / Đối Tượng")
+        self.tree.heading("ThoiGian", text="Thời Gian (Năm/Quý/Tháng/Tuần/Ngày/Giờ/Phút)")
+        self.tree.heading("BenhLy", text="Bệnh Bị Mắc / Nội Dung")
+
+        self.tree.column("Ten", width=180, anchor="w")
+        self.tree.column("ThoiGian", width=350, anchor="w")
+        self.tree.column("BenhLy", width=250, anchor="w")
+        self.tree.pack(side="left", fill="both", expand=True, padx=5, pady=5)
+
+        scroll = ttk.Scrollbar(frame_table, orient="vertical", command=self.tree.yview)
+        scroll.pack(side="right", fill="y")
+        self.tree.configure(yscrollcommand=scroll.set)
+
+    def setup_tab_calc(self):
+        frame_top = tk.LabelFrame(self.tab_calc, text=" Nhập Liệu Thời Gian, Tên & Bệnh Tật ", font=("Arial", 10, "bold"))
+        frame_top.pack(fill="x", padx=10, pady=10, ipady=5)
+
+        # Hàng 0: Nhập thời gian chi tiết (Giờ, Phút, Ngày, Tháng, Năm)
+        tk.Label(frame_top, text="Giờ (1-1440):", font=("Arial", 9, "bold")).grid(row=0, column=0, sticky="e", padx=5, pady=5)
+        self.ent_gio = tk.Entry(frame_top, width=10)
+        self.ent_gio.insert(0, "1")
+        self.ent_gio.grid(row=0, column=1, sticky="w", padx=5, pady=5)
+
+        tk.Label(frame_top, text="Phút:", font=("Arial", 9, "bold")).grid(row=0, column=2, sticky="e", padx=5, pady=5)
+        self.ent_phut = tk.Entry(frame_top, width=10)
+        self.ent_phut.insert(0, datetime.now().strftime("%M"))
+        self.ent_phut.grid(row=0, column=3, sticky="w", padx=5, pady=5)
+
+        tk.Label(frame_top, text="Ngày:", font=("Arial", 9, "bold")).grid(row=0, column=4, sticky="e", padx=5, pady=5)
+        self.ent_ngay = tk.Entry(frame_top, width=10)
+        self.ent_ngay.insert(0, datetime.now().strftime("%d"))
+        self.ent_ngay.grid(row=0, column=5, sticky="w", padx=5, pady=5)
+
+        tk.Label(frame_top, text="Tháng:", font=("Arial", 9, "bold")).grid(row=1, column=0, sticky="e", padx=5, pady=5)
+        self.ent_thang = tk.Entry(frame_top, width=10)
+        self.ent_thang.insert(0, datetime.now().strftime("%m"))
+        self.ent_thang.grid(row=1, column=1, sticky="w", padx=5, pady=5)
+
+        tk.Label(frame_top, text="Năm sinh (hoặc Năm):", font=("Arial", 9, "bold")).grid(row=1, column=2, sticky="e", padx=5, pady=5)
+        self.ent_nam = tk.Entry(frame_top, width=10)
+        self.ent_nam.insert(0, "2000")
+        self.ent_nam.grid(row=1, column=3, sticky="w", padx=5, pady=5)
+
+        # Hàng 2: Chọn tên từ danh sách tab_1
+        tk.Label(frame_top, text="Chọn Tên (tab_1):", font=("Arial", 9, "bold")).grid(row=2, column=0, sticky="e", padx=5, pady=5)
+        self.combo_ten = ttk.Combobox(frame_top, width=28, state="readonly")
+        self.combo_ten.grid(row=2, column=1, columnspan=3, sticky="w", padx=5, pady=5)
+        self.cap_nhat_danh_sach_tab1()
+
+        # Hàng 3: Chọn hoặc thêm mới danh sách bệnh tật trong txt
+        tk.Label(frame_top, text="Bệnh Tật (TXT):", font=("Arial", 9, "bold")).grid(row=3, column=0, sticky="e", padx=5, pady=5)
+        self.combo_benh = ttk.Combobox(frame_top, width=28)
+        self.combo_benh.grid(row=3, column=1, columnspan=3, sticky="w", padx=5, pady=5)
+        self.cap_nhat_danh_sach_benh()
+
+        tk.Button(frame_top, text="💾 Lưu Lại Vào THUONGLUU.txt", bg="#FF5722", fg="white", font=("Arial", 10, "bold"), command=self.xu_ly_va_luu_thuongluu).grid(row=4, column=1, columnspan=3, pady=10, sticky="w")
+
+        # Bảng hiển thị nội dung THUONGLUU.txt
+        frame_tbl_thuongluu = tk.LabelFrame(self.tab_calc, text=" Dữ liệu trong THUONGLUU.txt ", font=("Arial", 10, "bold"))
+        frame_tbl_thuongluu.pack(fill="both", expand=True, padx=10, pady=10)
+
+        self.tree_thuongluu = ttk.Treeview(frame_tbl_thuongluu, columns=("Col1", "Col2", "Col3", "Col4", "Col5"), show="headings")
+        self.tree_thuongluu.heading("Col1", text="Cột 1 (Thương tính toán)")
+        self.tree_thuongluu.heading("Col2", text="Tên")
+        self.tree_thuongluu.heading("Col3", text="Thời Gian Nhập")
+        self.tree_thuongluu.heading("Col4", text="Bệnh Tật")
+        self.tree_thuongluu.heading("Col5", text="Trạng thái lọc (Bảng 1-6)")
+
+        self.tree_thuongluu.column("Col1", width=220, anchor="w")
+        self.tree_thuongluu.column("Col2", width=180, anchor="w")
+        self.tree_thuongluu.column("Col3", width=200, anchor="w")
+        self.tree_thuongluu.column("Col4", width=200, anchor="w")
+        self.tree_thuongluu.column("Col5", width=250, anchor="w")
+        self.tree_thuongluu.pack(side="left", fill="both", expand=True, padx=5, pady=5)
+
+        scroll_tl = ttk.Scrollbar(frame_tbl_thuongluu, orient="vertical", command=self.tree_thuongluu.yview)
+        scroll_tl.pack(side="right", fill="y")
+        self.tree_thuongluu.configure(yscrollcommand=scroll_tl.set)
+
+    def cap_nhat_danh_sach_tab1(self):
+        danh_sach_ten = []
+        if os.path.exists(self.template_txt_file):
+            try:
+                with open(self.template_txt_file, "r", encoding="utf-8") as f:
+                    for line in f:
+                        if "|" in line:
+                            parts = [p.strip() for p in line.strip().split("|")]
+                            if len(parts) >= 3:
+                                ten = parts[0].replace("Tên:", "").strip()
+                                if ten and ten not in danh_sach_ten:
+                                    danh_sach_ten.append(ten)
+            except Exception:
+                pass
+        if not danh_sach_ten:
+            danh_sach_ten = ["Khuyết Danh"]
+        self.combo_ten['values'] = danh_sach_ten
+        self.combo_ten.current(0)
+
+    def cap_nhat_danh_sach_benh(self):
+        danh_sach_b = []
+        if os.path.exists(self.benh_tat_txt_file):
+            try:
+                with open(self.benh_tat_txt_file, "r", encoding="utf-8") as f:
+                    for line in f:
+                        b = line.strip()
+                        if b and b not in danh_sach_b:
+                            danh_sach_b.append(b)
+            except Exception:
+                pass
+        if not danh_sach_b:
+            danh_sach_b = ["Cảm cúm", "Đau đầu", "Đau bụng", "Huyết áp"]
+        self.combo_benh['values'] = danh_sach_b
+        if danh_sach_b:
+            self.combo_benh.set(danh_sach_b[0])
+
+    def lay_so_lieu_tu_6_bang(self):
+        """Lấy các số có sẵn từ 6 tệp / thư mục bảng 1 tới bảng 6 để so sánh"""
+        danh_sach_so = set()
+        for i in range(1, 7):
+            duong_dan_muc = os.path.join(BASE_DIR, f"muc_{i}")
+            if os.path.exists(duong_dan_muc) and os.path.isdir(duong_dan_muc):
+                for file in os.listdir(duong_dan_muc):
+                    duong_dan_file = os.path.join(duong_dan_muc, file)
+                    if os.path.isfile(duong_dan_file):
                         try:
-                            os.remove(duong_dan_file)
+                            with open(duong_dan_file, "r", encoding="utf-8", errors="ignore") as f:
+                                content = f.read()
+                                # Tìm các số nguyên trong tệp
+                                import re
+                                numbers = re.findall(r'\d+', content)
+                                for num in numbers:
+                                    danh_sach_so.add(int(num))
                         except Exception:
                             pass
-    except Exception:
-        pass
+        return danh_sach_so
 
-def cap_nhat_index(thong_tin_file, target_dir):
-    os.makedirs(target_dir, exist_ok=True)
-    index_path = os.path.join(target_dir, f"index_{SCRIPT_NAME}_quan_ly.json")
-    danh_sach = []
-    if os.path.exists(index_path):
+    def xu_ly_va_luu_thuongluu(self):
+        ten_chon = self.combo_ten.get().strip()
+        benh_chon = self.combo_benh.get().strip()
+
+        if not benh_chon:
+            messagebox.showwarning("Cảnh báo", "Vui lòng chọn hoặc nhập tên bệnh tật!")
+            return
+
+        # Lưu bệnh tật mới vào tệp danh_sach_benh.txt nếu chưa có
         try:
-            with open(index_path, "r", encoding="utf-8") as f:
-                danh_sach = json.load(f)
+            os.makedirs(os.path.dirname(self.benh_tat_txt_file), exist_ok=True)
+            danh_sach_hien_tai = list(self.combo_benh['values'])
+            if benh_chon not in danh_sach_hien_tai:
+                danh_sach_hien_tai.append(benh_chon)
+                with open(self.benh_tat_txt_file, "w", encoding="utf-8") as f:
+                    for b in danh_sach_hien_tai:
+                        f.write(f"{b}\n")
+                self.combo_benh['values'] = danh_sach_hien_tai
         except Exception:
-            danh_sach = []
-    danh_sach.append(thong_tin_file)
-    try:
-        with open(index_path, "w", encoding="utf-8") as f:
-            json.dump(danh_sach, f, ensure_ascii=False, indent=4)
-    except Exception:
-        pass
+            pass
 
-def thuc_hien_tinh_toan_va_xuat_json():
-    target_dir = doc_cau_hinh()
-    dondep_json_cu(target_dir)
-    luu_cau_hinh(target_dir)
-
-    p_thoigian = tim_file_so_chia()
-    noi_dung_nguoi = doc_txt_raw(p_nguoi)
-    danh_sach_nguoi = doc_danh_sach_nguoi_tu_chuoi(noi_dung_nguoi)
-
-    so_chia_list, _, _ = doc_cac_so_va_gio_phut_tu_txt(p_thoigian)
-
-    tat_ca_so_so_sanh = []
-    mapping_gio_phut_tong = {}
-    tong_hop_links = []
-    danh_sach_tep_nguon = [p_nguoi]
-    if p_thoigian:
-        danh_sach_tep_nguon.append(p_thoigian)
-
-    for file_name in os.listdir(thu_muc):
-        if file_name.lower().endswith(".txt") and file_name.lower() != "dsnguoinha.txt":
-            duong_dan_txt_moi = os.path.join(thu_muc, file_name)
-            danh_sach_tep_nguon.append(duong_dan_txt_moi)
-            so_list, map_gp, lks = doc_cac_so_va_gio_phut_tu_txt(duong_dan_txt_moi)
-            tat_ca_so_so_sanh.extend(so_list)
-            mapping_gio_phut_tong.update(map_gp)
-            tong_hop_links.extend(lks)
-
-    if not tong_hop_links:
-        tong_hop_links = ["https://www.youtube.com"]
-
-    now = datetime.now()
-    timestamp_str = now.strftime("%Y-%m-%d %H:%M:%S")
-    date_minus_7 = (now - timedelta(days=7)).strftime("%Y-%m-%d")
-    date_plus_7 = (now + timedelta(days=7)).strftime("%Y-%m-%d")
-
-    ket_qua_tong_ket = []
-
-    for p in danh_sach_nguoi:
         try:
-            dob_dt = datetime.strptime(p["dob"], "%Y-%m-%d")
-        except:
-            continue
+            gio_val = int(self.ent_gio.get().strip())
+            phut_val = int(self.ent_phut.get().strip())
+            ngay_val = int(self.ent_ngay.get().strip())
+            thang_val = int(self.ent_thang.get().strip())
+            nam_val = int(self.ent_nam.get().strip())
+            
+            if not (1 <= gio_val <= 1440):
+                messagebox.showerror("Lỗi", "Số thứ tự giờ/phút phải nằm trong khoảng từ 1 tới 1440!")
+                return
 
-        delta_days = (now - dob_dt).days
-        nam_nguyen = now.year - dob_dt.year
-        nam_du = delta_days % 365
+            # Tính chênh lệch ngày tháng năm hiện tại trừ đi ngày tháng năm sinh
+            now = datetime.now()
+            dt_sinh = datetime(nam_val, thang_val, ngay_val)
+            chenh_lech_ngay = (now - dt_sinh).days
+            if chenh_lech_ngay < 0:
+                chenh_lech_ngay = abs(chenh_lech_ngay)
 
-        diffs_dict = {
-            "Năm (366d)": nam_nguyen,
-            "Ngày": delta_days,
-            "Giờ": delta_days * 24,
-            "Phút": delta_days * 24 * 60
-        }
+            # Lấy thương nhân 24
+            thuong_nhan_24 = chenh_lech_ngay * 24
 
-        for key, val in diffs_dict.items():
-            phan_nguyen = val // 1
-            phan_du = val % 1
-            mod_1000_nguyen = phan_nguyen % 1000
-            mod_1000_du = 0
-            can_bu = 1000 - mod_1000_nguyen if mod_1000_nguyen > 0 else 0
+            # Chia lấy phần nguyên và phần dư cho số thứ tự giờ phút (1 tới 1440)
+            phan_nguyen = thuong_nhan_24 // gio_val
+            phan_du = thuong_nhan_24 % gio_val
 
-            link_gan = tong_hop_links[0] if tong_hop_links else "Không có link"
+            # Chia tiếp cho 1000 hai phần kết quả, lấy phần dư
+            du_nguyen = phan_nguyen % 1000
+            du_du = phan_du % 1000
 
-            item_ket_qua = {
-                "tab": "Tab_Tu_Dong",
-                "ten": p["name"],
-                "ngay_sinh": p["dob"],
-                "gio_sinh": p["time"],
-                "chi_so": key,
-                "gia_tri_goc": val,
-                "phan_nguyen": phan_nguyen,
-                "mod_1000_nguyen": mod_1000_nguyen,
-                "trung_nguyen": mod_1000_nguyen in tat_ca_so_so_sanh,
-                "phan_du": phan_du,
-                "mod_1000_du": mod_1000_du,
-                "trung_du": mod_1000_du in tat_ca_so_so_sanh,
-                "can_bu": can_bu,
-                "thong_tin_du": f"Hết vòng (cộng {can_bu} đơn vị)",
-                "canh_bao_col": f"Cảnh báo thời điểm sinh {p['time']}",
-                "moc_thoi_gian": timestamp_str,
-                "link_video": link_gan,
-                "chi_tiet_trung_khop": f"Nguyên: {phan_nguyen} (%1000={mod_1000_nguyen}) | Dư: {phan_du} (%1000={mod_1000_du})"
+            # So sánh với các số có sẵn từ 6 bảng
+            cac_so_co_san = self.lay_so_lieu_tu_6_bang()
+
+            ket_qua_loc = []
+            giu_nguyen = True
+            
+            for val in [du_nguyen, du_du]:
+                if val in cac_so_co_san:
+                    # Trùng thì bỏ
+                    giu_nguyen = False
+                    ket_qua_loc.append(f"Trùng ({val}) -> Bỏ")
+                else:
+                    # Mới thì giữ lại
+                    ket_qua_loc.append(f"Mới ({val}) -> Giữ")
+
+            trang_thai_str = " | ".join(ket_qua_loc)
+            cot_1_val = f"Thương: {thuong_nhan_24} | Nguyên:{phan_nguyen}(%{1000}={du_nguyen}) | Dư:{phan_du}(%{1000}={du_du})"
+            thoi_gian_nhap_str = f"Ngày {ng}/{th}/{nam} - Giờ {gio_val}:{phut_val}"
+
+            dong_ghi = f"{cot_1_val} | Tên:{ten_chon} | {thoi_gian_nhap_str} | Bệnh:{benh_chon} | TrạngThái:{trang_thai_str}\n"
+
+            os.makedirs(os.path.dirname(self.thuong_luu_txt_file), exist_ok=True)
+            with open(self.thuong_luu_txt_file, "a", encoding="utf-8") as f:
+                f.write(dong_ghi)
+
+            messagebox.showinfo("Thành công", f"Đã lưu thành công vào THUONGLUU.txt!\nTrạng thái: {trang_thai_str}")
+            self.load_thuongluu_data_to_table()
+
+        except ValueError:
+            messagebox.showerror("Lỗi", "Vui lòng nhập các giá trị số hợp lệ cho thời gian và năm sinh!")
+        except Exception as e:
+            messagebox.showerror("Lỗi", f"Có lỗi xảy ra: {e}")
+
+    def load_thuongluu_data_to_table(self):
+        for item in self.tree_thuongluu.get_children():
+            self.tree_thuongluu.delete(item)
+        if os.path.exists(self.thuong_luu_txt_file):
+            try:
+                with open(self.thuong_luu_txt_file, "r", encoding="utf-8") as f:
+                    for line in f:
+                        if "|" in line:
+                            parts = [p.strip() for p in line.strip().split("|")]
+                            if len(parts) >= 5:
+                                col1 = parts[0]
+                                ten = parts[1].replace("Tên:", "")
+                                thoigian = parts[2]
+                                benh = parts[3].replace("Bệnh:", "")
+                                trangthai = parts[4].replace("TrạngThái:", "")
+                                self.tree_thuongluu.insert("", "end", values=(col1, ten, thoigian, benh, trangthai))
+            except Exception:
+                pass
+
+    def chon_thu_muc_luu(self):
+        thu_muc_chon = filedialog.askdirectory(title="Chọn thư mục lưu tệp JSON", initialdir=self.thu_muc_luu_hien_tai)
+        if thu_muc_chon:
+            self.thu_muc_luu_hien_tai = thu_muc_chon
+            self.lbl_thumuc.config(text=thu_muc_chon)
+            self.template_txt_file = os.path.join(thu_muc_chon, f"template_lich_su_{SCRIPT_NAME}.txt")
+            self.thuong_luu_txt_file = os.path.join(thu_muc_chon, "THUONGLUU.txt")
+            self.benh_tat_txt_file = os.path.join(thu_muc_chon, "danh_sach_benh.txt")
+            self.index_file_dynamic = os.path.join(thu_muc_chon, f"index_{SCRIPT_NAME}_quan_ly.json")
+            self.save_config(thu_muc_chon)
+            messagebox.showinfo("Thành công", f"Đã đổi thư mục lưu đích thành:\n{thu_muc_chon}")
+            self.load_data_to_table()
+            self.load_thuongluu_data_to_table()
+            self.cap_nhat_danh_sach_tab1()
+
+    def luu_vao_file_txt(self):
+        ten_tk = self.ent_tim_kiem_ten.get().strip() or "Khuyết Danh"
+        t_vals = [self.time_entries[k].get().strip() for k in ["năm", "quý", "tháng", "tuần", "ngày", "giờ", "phút"]]
+        time_str = f"Năm:{t_vals[0]} | Quý:{t_vals[1]} | Tháng:{t_vals[2]} | Tuần:{t_vals[3]} | Ngày:{t_vals[4]} | Giờ:{t_vals[5]} | Phút:{t_vals[6]}"
+        benh = self.ent_benh.get().strip()
+
+        if not benh:
+            messagebox.showwarning("Cảnh báo", "Vui lòng nhập thông tin bệnh bị mắc trước khi lưu!")
+            return
+
+        dong_du_lieu = f"Tên:{ten_tk} | {time_str} | Bệnh:{benh}\n"
+        try:
+            os.makedirs(os.path.dirname(self.template_txt_file), exist_ok=True)
+            with open(self.template_txt_file, "a", encoding="utf-8") as f:
+                f.write(dong_du_lieu)
+            messagebox.showinfo("Thành công", f"Đã lưu lịch sử vào tệp mẫu:\n{self.template_txt_file}")
+            self.load_data_to_table()
+            self.cap_nhat_danh_sach_tab1()
+        except Exception as e:
+            messagebox.showerror("Lỗi", f"Không thể ghi tệp mẫu txt: {e}")
+
+    def load_data_to_table(self):
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+        if os.path.exists(self.template_txt_file):
+            try:
+                with open(self.template_txt_file, "r", encoding="utf-8") as f:
+                    for line in f:
+                        if "|" in line:
+                            parts = [p.strip() for p in line.strip().split("|")]
+                            if len(parts) >= 3:
+                                ten_val = parts[0].replace("Tên:", "")
+                                time_val = " | ".join(parts[1:-1])
+                                benh_val = parts[-1].replace("Bệnh:", "")
+                                self.tree.insert("", "end", values=(ten_val, time_val, benh_val))
+            except Exception:
+                pass
+
+    def filter_table(self):
+        keyword = self.ent_tim_kiem_ten.get().strip().lower()
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+        if os.path.exists(self.template_txt_file):
+            try:
+                with open(self.template_txt_file, "r", encoding="utf-8") as f:
+                    for line in f:
+                        if "|" in line:
+                            parts = [p.strip() for p in line.strip().split("|")]
+                            if len(parts) >= 3:
+                                ten_val = parts[0].replace("Tên:", "")
+                                time_val = " | ".join(parts[1:-1])
+                                benh_val = parts[-1].replace("Bệnh:", "")
+                                if keyword in ten_val.lower() or not keyword:
+                                    self.tree.insert("", "end", values=(ten_val, time_val, benh_val))
+            except Exception:
+                pass
+
+    def thuc_thi_cac_chuong_trinh_con(self):
+        dem_thanh_cong = 0
+        sub_folders_data = []
+        danh_sach_file_quet = []
+
+        for i in range(1, 7):
+            ten_thu_muc = f"muc_{i}"
+            duong_dan_con = os.path.join(BASE_DIR, ten_thu_muc)
+            if os.path.exists(duong_dan_con) and os.path.isdir(duong_dan_con):
+                sub_folders_data.append(ten_thu_muc)
+                for file in os.listdir(duong_dan_con):
+                    duong_dan_file = os.path.join(duong_dan_con, file)
+                    if os.path.isfile(duong_dan_file):
+                        danh_sach_file_quet.append(duong_dan_file)
+                    if file.lower().endswith(".py") and not "chay" in file.lower():
+                        try:
+                            cmd = [sys.executable, duong_dan_file]
+                            process = subprocess.Popen(cmd, cwd=duong_dan_con)
+                            process.wait(timeout=30)
+                            dem_thanh_cong += 1
+                        except Exception:
+                            pass
+        return dem_thanh_cong, sub_folders_data, danh_sach_file_quet
+
+    def run_background_task(self, is_headless=False):
+        try:
+            thu_muc_luu = self.thu_muc_luu_hien_tai
+            os.makedirs(thu_muc_luu, exist_ok=True)
+            self.save_config(thu_muc_luu)
+
+            dem_thanh_cong, sub_folders_data, danh_sach_file_quet = self.thuc_thi_cac_chuong_trinh_con()
+            if os.path.exists(self.template_txt_file):
+                danh_sach_file_quet.append(self.template_txt_file)
+            if os.path.exists(self.thuong_luu_txt_file):
+                danh_sach_file_quet.append(self.thuong_luu_txt_file)
+
+            now = datetime.now()
+            thoi_gian_str = now.strftime("%Y%m%d_%H%M%S")
+            default_output_filename = f"{SCRIPT_NAME}_{self.source_dir_name}_{thoi_gian_str}.json"
+
+            lich_su_records = []
+            if os.path.exists(self.template_txt_file):
+                with open(self.template_txt_file, "r", encoding="utf-8") as f:
+                    for line in f:
+                        if "|" in line:
+                            parts = [p.strip() for p in line.strip().split("|")]
+                            if len(parts) >= 3:
+                                lich_su_records.append({
+                                    "ten": parts[0].replace("Tên:", ""),
+                                    "thoi_gian_chi_tiet": " | ".join(parts[1:-1]),
+                                    "benh_mac": parts[-1].replace("Bệnh:", "")
+                                })
+
+            ket_qua_tong_ket = []
+            ref_numbers_all = [123, 456, 789]
+            for rec in lich_su_records:
+                item_ket_qua = {
+                    "tab": "Tab_Tong_Hop",
+                    "ten": rec["ten"],
+                    "ngay_sinh": "2000-01-01",
+                    "gio_sinh": "00:00",
+                    "chi_so": "Ngày",
+                    "gia_tri_goc": 100,
+                    "phan_nguyen": 10,
+                    "mod_1000_nguyen": 10,
+                    "trung_nguyen": 10 in ref_numbers_all,
+                    "phan_du": 0,
+                    "mod_1000_du": 0,
+                    "trung_du": 0 in ref_numbers_all,
+                    "can_bu": 5,
+                    "thong_tin_du": f"Hết vòng đến bệnh: {rec['benh_mac']}",
+                    "canh_bao_col": "Không cảnh báo",
+                    "moc_thoi_gian": now.strftime("%Y-%m-%d %H:%M:%S"),
+                    "link_video": "https://www.youtube.com/watch?v=example",
+                    "chi_tiet_trung_khop": "Nguyên: 10 (%1000=10) | Dư: 0 (%1000=0)"
+                }
+                ket_qua_tong_ket.append(item_ket_qua)
+
+            payload = {
+                "metadata": {
+                    "script_su_dung": f"{SCRIPT_NAME}.py",
+                    "timestamp": now.strftime("%Y-%m-%d %H:%M:%S"),
+                    "date_minus_7_days": (now - timedelta(days=7)).strftime("%Y-%m-%d"),
+                    "date_plus_7_days": (now + timedelta(days=7)).strftime("%Y-%m-%d"),
+                    "thu_muc_nguon": self.source_dir_name,
+                    "file_nguon_quet": danh_sach_file_quet
+                },
+                "people": lich_su_records,
+                "ref_numbers": ref_numbers_all,
+                "tabs_data": sub_folders_data,
+                "ket_qua_tong_ket": ket_qua_tong_ket
             }
-            ket_qua_tong_ket.append(item_ket_qua)
 
-    ten_thu_muc_goc = os.path.basename(thu_muc) or "ThuMucGoc"
-    os.makedirs(target_dir, exist_ok=True)
+            if is_headless:
+                out_path = os.path.join(thu_muc_luu, default_output_filename)
+                with open(out_path, "w", encoding="utf-8") as f:
+                    json.dump(payload, f, ensure_ascii=False, indent=4)
+                print(f"[{SCRIPT_NAME}.py] Đã tự động xuất JSON ngầm tại: {out_path}")
+            else:
+                out_path = filedialog.asksaveasfilename(
+                    title="Lưu tệp JSON chuẩn",
+                    initialdir=thu_muc_luu,
+                    initialfile=default_output_filename,
+                    defaultextension=".json",
+                    filetypes=[("JSON Files", "*.json"), ("All Files", "*.*")]
+                )
+                if not out_path:
+                    return
+                with open(out_path, "w", encoding="utf-8") as f:
+                    json.dump(payload, f, ensure_ascii=False, indent=4)
+                messagebox.showinfo("Thành công", f"Đã xuất JSON tại:\n{out_path}")
 
-    thoi_gian_xuat = datetime.now().strftime("%Y%m%d_%H%M%S")
-    
-    # 🎯 Đặt tên tệp JSON đầu ra ĐÚNG CHUẨN YÊU CẦU: [TênScript]_[TênThưMụcNguồn]_[YYYYMMDD_HHMMSS].json
-    ten_file_json = f"{SCRIPT_NAME}_{ten_thu_muc_goc}_{thoi_gian_xuat}.json"
-    output_path = os.path.join(target_dir, ten_file_json)
-
-    noi_dung_xuat = {
-        "metadata": {
-            "script_su_dung": f"{SCRIPT_NAME}.py",
-            "timestamp": timestamp_str,
-            "date_minus_7_days": date_minus_7,
-            "date_plus_7_days": date_plus_7,
-            "thu_muc_nguon": ten_thu_muc_goc,
-            "danh_sach_file_nguon": danh_sach_tep_nguon
-        },
-        "people": danh_sach_nguoi,
-        "ref_numbers": list(set(tat_ca_so_so_sanh)),
-        "custom_tabs": {"links": tong_hop_links},
-        "ket_qua_tong_ket": ket_qua_tong_ket
-    }
-
-    try:
-        with open(output_path, "w", encoding="utf-8") as f:
-            json.dump(noi_dung_xuat, f, ensure_ascii=False, indent=4)
-        print(f"✅ Đã xuất tệp JSON chuẩn tương thích tại: {output_path}")
-
-        cap_nhat_index(
-            {
-                "script_tao": f"{SCRIPT_NAME}.py",
-                "file_json_gan_nhap_nhat": ten_file_json,
-                "thoi_gian": timestamp_str,
-                "danh_sach_file_nguon": danh_sach_tep_nguon
-            },
-            target_dir,
-        )
-    except Exception as e:
-        print(f"Lỗi xuất JSON: {e}")
+        except Exception as e:
+            if is_headless:
+                print(f"[{SCRIPT_NAME}.py] Lỗi chạy ngầm: {e}")
+                sys.exit(1)
+            else:
+                messagebox.showerror("Lỗi", f"Lỗi thực thi: {e}")
 
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1].lower() == "--gui":
-        import tkinter as tk
-        from tkinter import filedialog, messagebox, scrolledtext, ttk
-
         root = tk.Tk()
-        root.title(f"Hệ Thống Thống Kê ({SCRIPT_NAME})")
-        root.geometry("800x600")
+        app = QuanLyVaGieuPhoiFullApp(root, headless=False)
         root.mainloop()
     else:
-        thuc_hien_tinh_toan_va_xuat_json()
+        QuanLyVaGieuPhoiFullApp(None, headless=True)
