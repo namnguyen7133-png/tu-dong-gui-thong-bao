@@ -1,38 +1,33 @@
-name: Sync Drive & Run Automatically
+name: Tự Động Chạy Python & Cập Nhật Giao Diện Mobile
 
 on:
-  schedule:
-    - cron: '0 */3 * * *'  # Chạy định kỳ 3 tiếng một lần
-  workflow_dispatch:      # Cho phép bấm chạy thủ công khi cần
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:      # Cho phép bấm nút chạy thủ công bất cứ lúc nào trên điện thoại/web
 
 jobs:
-  run-sync:
+  run-python:
     runs-on: ubuntu-latest
-    timeout-minutes: 15    # ÉP BUỘC: Nếu chạy quá 15 phút sẽ tự ngắt, không bao giờ bị kẹt ca đêm nữa!
-
     steps:
-      - name: Checkout repository
+      - name: Lấy mã nguồn từ GitHub
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Cài đặt Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.11'
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install requests
-
-      - name: Run Python script
+      - name: Chạy tệp điều phối tổng
         run: |
           python dieu_phoi_tong_6_tep.py
+
+      - name: Tổng hợp JSON ra index.html
+        run: |
           python tong_hop_json.py
 
-      - name: Commit and push changes
+      - name: Đẩy kết quả cập nhật lên GitHub
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "github-actions[bot]"
-          git add -A
-          git diff-index --quiet HEAD || git commit -m "Auto update JSON and website data"
-          git push
+          git config --local user.email "namnguyen7133@gmail.com"
+          git config --local user.name "namnguyen7133-png"
+          git add KET_QUA_JSON/*.json index.html
+          git diff-index --quiet HEAD || (git commit -m "🤖 [Auto Action] Cập nhật kết quả dữ liệu tự động" && git push)
