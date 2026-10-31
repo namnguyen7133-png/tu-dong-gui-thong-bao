@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # ============================================================
-# BỘ ĐIỀU PHỐI TỰ ĐỘNG TOÀN BỘ TỆP PYTHON TRONG REPO (CÁCH 10 PHÚT/TỆP)
+# BỘ ĐIỀU PHỐI TỰ ĐỘNG TOÀN BỘ TỆP PYTHON TRONG REPO
 # ============================================================
 
 import os
@@ -114,7 +114,7 @@ class QuanLyVaGieuPhoiFullApp:
         frame_btn.pack(fill="x", padx=10, pady=5)
 
         tk.Button(frame_btn, text="💾 Lưu Lịch Sử Vào Tệp Mẫu TXT", bg="#2196F3", fg="white", font=("Arial", 9, "bold"), command=self.luu_vao_file_txt).pack(side="left", padx=5)
-        tk.Button(frame_btn, text="🚀 Chạy Toàn Bộ Chuỗi Python (10 Phút/Tệp)", bg="#4CAF50", fg="white", font=("Arial", 9, "bold"), command=lambda: self.run_background_task_voi_chuoi_10_phut()).pack(side="left", padx=5)
+        tk.Button(frame_btn, text="🚀 Chạy Toàn Bộ Chuỗi Python", bg="#4CAF50", fg="white", font=("Arial", 9, "bold"), command=lambda: self.run_background_task_voi_chuoi_10_phut()).pack(side="left", padx=5)
 
         frame_table = tk.LabelFrame(self.tab_main, text=" 2. Bảng Lịch Sử & Kết Quả Tra Cứu ", font=("Arial", 10, "bold"))
         frame_table.pack(fill="both", expand=True, padx=10, pady=10)
@@ -379,21 +379,19 @@ class QuanLyVaGieuPhoiFullApp:
                 pass
 
     def run_background_task_voi_chuoi_10_phut(self):
-        """Tự động quét tất cả các tệp .py trong repo, chạy tuần tự, chờ 10 phút mỗi tệp và gom toàn bộ kết quả chi tiết"""
+        """Tự động quét toàn bộ tệp .py trong repo, chạy tuần tự và gom kết quả JSON (tối ưu cho GitHub Actions)"""
         try:
             print("🚀 [CHUỖI TỰ ĐỘNG] Bắt đầu quét toàn bộ tệp Python trong repo...")
             thu_muc_luu = self.thu_muc_luu_hien_tai
             os.makedirs(thu_muc_luu, exist_ok=True)
             self.save_config(thu_muc_luu)
 
-            # 1. Tự động quét toàn bộ tệp .py trong thư mục gốc (trừ file script hiện tại)
             script_hien_tai = os.path.basename(__file__)
             danh_sach_file_py = sorted([f for f in glob.glob("*.py") if f != script_hien_tai])
             print(f"📁 Tìm thấy {len(danh_sach_file_py)} tệp Python cần chạy: {danh_sach_file_py}")
 
             ket_qua_thuc_thi_cac_file = []
 
-            # 2. Vòng lặp chạy lần lượt từng tệp Python, chờ 10 phút (600 giây) giữa các tệp
             for i, file_py in enumerate(danh_sach_file_py):
                 duong_dan_py = os.path.join(BASE_DIR, file_py)
                 print(f"\n▶️ [{i+1}/{len(danh_sach_file_py)}] Đang chạy tệp: {file_py}")
@@ -401,7 +399,6 @@ class QuanLyVaGieuPhoiFullApp:
                 start_time = datetime.now()
                 status_thuchien = "Thành công"
                 try:
-                    # Chạy tệp .py ngầm và chờ tối đa 5 phút cho mỗi tệp con
                     subprocess.run([sys.executable, duong_dan_py], check=True, timeout=300)
                     print(f"✅ Hoàn thành tệp: {file_py}")
                 except Exception as e:
@@ -414,12 +411,6 @@ class QuanLyVaGieuPhoiFullApp:
                     "thoi_gian_chay": start_time.strftime("%Y-%m-%d %H:%M:%S")
                 })
 
-                # Nếu chưa phải tệp cuối cùng, tiến hành chờ đúng 10 phút (600 giây)
-                if i < len(danh_sach_file_py) - 1:
-                    print(f"⏳ Đang chờ 10 phút (600 giây) trước khi chuyển sang tệp Python tiếp theo...")
-                    time.sleep(600)
-
-            # 3. Thu thập toàn bộ dữ liệu từ THUONGLUU.txt và template để đóng gói JSON đầy đủ
             now = datetime.now()
             thoi_gian_str = now.strftime("%Y%m%d_%H%M%S")
             default_output_filename = f"TONG_HOP_TOAN_BO_REPO_{thoi_gian_str}.json"
@@ -439,7 +430,6 @@ class QuanLyVaGieuPhoiFullApp:
                                     "trang_thai_loc": parts[4].replace("TrạngThái:", "")
                                 })
 
-            # 4. Đóng gói toàn bộ payload JSON đầy đủ thông tin chi tiết
             payload = {
                 "metadata": {
                     "script_dieu_phoi": f"{SCRIPT_NAME}.py",
