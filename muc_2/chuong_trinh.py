@@ -6,6 +6,7 @@ import subprocess
 from datetime import datetime, timedelta
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
+import re
 
 # 1. Định danh động theo tên tệp Python hiện tại
 SCRIPT_NAME = os.path.splitext(os.path.basename(__file__))[0]
@@ -64,7 +65,6 @@ class QuanLyVaGieuPhoiFullApp:
             print(f"❌ [CONFIG] Lỗi lưu cấu hình: {e}")
 
     def setup_ui(self):
-        # Tạo Notebook chứa các Tab
         self.notebook = ttk.Notebook(self.root)
         self.notebook.pack(fill="both", expand=True, padx=5, pady=5)
 
@@ -73,7 +73,7 @@ class QuanLyVaGieuPhoiFullApp:
         self.notebook.add(self.tab_main, text=" 📊 Quản Lý & Lịch Sử ")
         self.setup_tab_main()
 
-        # ================= TAB 2: Tab Mới - Tính Toán & Lưu Trữ Bệnh Tật =================
+        # ================= TAB 2: Tính Toán & Lưu Trữ THUONGLUU =================
         self.tab_calc = ttk.Frame(self.notebook)
         self.notebook.add(self.tab_calc, text=" 📝 Tính Toán & Lưu Trữ THUONGLUU ")
         self.setup_tab_calc()
@@ -137,10 +137,9 @@ class QuanLyVaGieuPhoiFullApp:
         self.tree.configure(yscrollcommand=scroll.set)
 
     def setup_tab_calc(self):
-        frame_top = tk.LabelFrame(self.tab_calc, text=" Nhập Liệu Thời Gian, Tên & Bệnh Tật ", font=("Arial", 10, "bold"))
+        frame_top = tk.LabelFrame(self.tab_calc, text=" Nhập Liệu Thời Gian, Tên & Bệnh Tật (Lọc Trùng 6 Bảng) ", font=("Arial", 10, "bold"))
         frame_top.pack(fill="x", padx=10, pady=10, ipady=5)
 
-        # Hàng 0: Nhập thời gian chi tiết (Giờ, Phút, Ngày, Tháng, Năm)
         tk.Label(frame_top, text="Giờ (1-1440):", font=("Arial", 9, "bold")).grid(row=0, column=0, sticky="e", padx=5, pady=5)
         self.ent_gio = tk.Entry(frame_top, width=10)
         self.ent_gio.insert(0, "1")
@@ -166,22 +165,19 @@ class QuanLyVaGieuPhoiFullApp:
         self.ent_nam.insert(0, "2000")
         self.ent_nam.grid(row=1, column=3, sticky="w", padx=5, pady=5)
 
-        # Hàng 2: Chọn tên từ danh sách tab_1
         tk.Label(frame_top, text="Chọn Tên (tab_1):", font=("Arial", 9, "bold")).grid(row=2, column=0, sticky="e", padx=5, pady=5)
         self.combo_ten = ttk.Combobox(frame_top, width=28, state="readonly")
         self.combo_ten.grid(row=2, column=1, columnspan=3, sticky="w", padx=5, pady=5)
         self.cap_nhat_danh_sach_tab1()
 
-        # Hàng 3: Chọn hoặc thêm mới danh sách bệnh tật trong txt
         tk.Label(frame_top, text="Bệnh Tật (TXT):", font=("Arial", 9, "bold")).grid(row=3, column=0, sticky="e", padx=5, pady=5)
         self.combo_benh = ttk.Combobox(frame_top, width=28)
         self.combo_benh.grid(row=3, column=1, columnspan=3, sticky="w", padx=5, pady=5)
         self.cap_nhat_danh_sach_benh()
 
-        tk.Button(frame_top, text="💾 Lưu Lại Vào THUONGLUU.txt", bg="#FF5722", fg="white", font=("Arial", 10, "bold"), command=self.xu_ly_va_luu_thuongluu).grid(row=4, column=1, columnspan=3, pady=10, sticky="w")
+        tk.Button(frame_top, text="💾 Kiểm Tra Trùng & Lưu THUONGLUU.txt", bg="#FF5722", fg="white", font=("Arial", 10, "bold"), command=self.xu_ly_va_luu_thuongluu).grid(row=4, column=1, columnspan=3, pady=10, sticky="w")
 
-        # Bảng hiển thị nội dung THUONGLUU.txt
-        frame_tbl_thuongluu = tk.LabelFrame(self.tab_calc, text=" Dữ liệu trong THUONGLUU.txt ", font=("Arial", 10, "bold"))
+        frame_tbl_thuongluu = tk.LabelFrame(self.tab_calc, text=" Dữ liệu trùng khớp trong THUONGLUU.txt ", font=("Arial", 10, "bold"))
         frame_tbl_thuongluu.pack(fill="both", expand=True, padx=10, pady=10)
 
         self.tree_thuongluu = ttk.Treeview(frame_tbl_thuongluu, columns=("Col1", "Col2", "Col3", "Col4", "Col5"), show="headings")
@@ -189,7 +185,7 @@ class QuanLyVaGieuPhoiFullApp:
         self.tree_thuongluu.heading("Col2", text="Tên")
         self.tree_thuongluu.heading("Col3", text="Thời Gian Nhập")
         self.tree_thuongluu.heading("Col4", text="Bệnh Tật")
-        self.tree_thuongluu.heading("Col5", text="Trạng thái lọc (Bảng 1-6)")
+        self.tree_thuongluu.heading("Col5", text="Trạng thái lọc (Chỉ lấy Trùng)")
 
         self.tree_thuongluu.column("Col1", width=220, anchor="w")
         self.tree_thuongluu.column("Col2", width=180, anchor="w")
@@ -239,7 +235,6 @@ class QuanLyVaGieuPhoiFullApp:
             self.combo_benh.set(danh_sach_b[0])
 
     def lay_so_lieu_tu_6_bang(self):
-        """Lấy các số có sẵn từ 6 tệp / thư mục bảng 1 tới bảng 6 để so sánh"""
         danh_sach_so = set()
         print("🔍 [KIỂM TRA] Bắt đầu quét dữ liệu từ các thư mục muc_1 đến muc_6...")
         for i in range(1, 7):
@@ -252,15 +247,11 @@ class QuanLyVaGieuPhoiFullApp:
                         try:
                             with open(duong_dan_file, "r", encoding="utf-8", errors="ignore") as f:
                                 content = f.read()
-                                import re
                                 numbers = re.findall(r'\d+', content)
-                                print(f"      📄 Đọc tệp {file}: tìm thấy {len(numbers)} số.")
                                 for num in numbers:
                                     danh_sach_so.add(int(num))
                         except Exception as e:
                             print(f"      ❌ Lỗi đọc tệp {file}: {e}")
-            else:
-                print(f"   ⚠️ Không tìm thấy thư mục: {duong_dan_muc}")
         print(f"✅ [KIỂM TRA] Tổng số lượng số duy nhất thu thập từ 6 bảng: {len(danh_sach_so)}")
         return danh_sach_so
 
@@ -271,18 +262,6 @@ class QuanLyVaGieuPhoiFullApp:
         if not benh_chon:
             messagebox.showwarning("Cảnh báo", "Vui lòng chọn hoặc nhập tên bệnh tật!")
             return
-
-        try:
-            os.makedirs(os.path.dirname(self.benh_tat_txt_file), exist_ok=True)
-            danh_sach_hien_tai = list(self.combo_benh['values'])
-            if benh_chon not in danh_sach_hien_tai:
-                danh_sach_hien_tai.append(benh_chon)
-                with open(self.benh_tat_txt_file, "w", encoding="utf-8") as f:
-                    for b in danh_sach_hien_tai:
-                        f.write(f"{b}\n")
-                self.combo_benh['values'] = danh_sach_hien_tai
-        except Exception:
-            pass
 
         try:
             gio_val = int(self.ent_gio.get().strip())
@@ -310,17 +289,25 @@ class QuanLyVaGieuPhoiFullApp:
 
             cac_so_co_san = self.lay_so_lieu_tu_6_bang()
 
+            # LOGIC MỚI: Kiểm tra xem có TRÙNG với 6 bảng hay không
+            co_trung = False
             ket_qua_loc = []
-            giu_nguyen = True
             
             for val in [du_nguyen, du_du]:
                 if val in cac_so_co_san:
-                    giu_nguyen = False
-                    ket_qua_loc.append(f"Trùng ({val}) -> Bỏ")
+                    co_trung = True
+                    ket_qua_loc.append(f"Trùng ({val}) -> Lấy")
                 else:
-                    ket_qua_loc.append(f"Mới ({val}) -> Giữ")
+                    ket_qua_loc.append(f"Không trùng ({val}) -> Bỏ")
 
             trang_thai_str = " | ".join(ket_qua_loc)
+
+            # NẾU KHÔNG TRÙNG THÌ BỎ QUA LUÔN, KHÔNG LƯU, KHÔNG XUẤT
+            if not co_trung:
+                messagebox.showwarning("Bỏ qua", f"Kết quả (Nguyên: {du_nguyen}, Dư: {du_du})\nKHÔNG TRÙNG với bất kỳ số nào trong 6 bảng -> BỎ QUA!")
+                return
+
+            # NẾU CÓ TRÙNG THÌ LẤY CẢ DÒNG ĐÓ VÀ LƯU
             cot_1_val = f"Thương: {thuong_nhan_24} | Nguyên:{phan_nguyen}(%{1000}={du_nguyen}) | Dư:{phan_du}(%{1000}={du_du})"
             thoi_gian_nhap_str = f"Ngày {ngay_val}/{thang_val}/{nam_val} - Giờ {gio_val}:{phut_val}"
 
@@ -330,7 +317,7 @@ class QuanLyVaGieuPhoiFullApp:
             with open(self.thuong_luu_txt_file, "a", encoding="utf-8") as f:
                 f.write(dong_ghi)
 
-            messagebox.showinfo("Thành công", f"Đã lưu thành công vào THUONGLUU.txt!\nTrạng thái: {trang_thai_str}")
+            messagebox.showinfo("Thành công (Có Trùng)", f"🎉 ĐÃ TÌM THẤY TRÙNG VỚI 6 BẢNG!\nĐã lấy cả dòng, lưu vào THUONGLUU.txt và xuất JSON.\nTrạng thái: {trang_thai_str}")
             self.load_thuongluu_data_to_table()
 
         except ValueError:
@@ -345,7 +332,7 @@ class QuanLyVaGieuPhoiFullApp:
             try:
                 with open(self.thuong_luu_txt_file, "r", encoding="utf-8") as f:
                     for line in f:
-                        if "|" in line:
+                        if "|" in line and "Trùng" in line:
                             parts = [p.strip() for p in line.strip().split("|")]
                             if len(parts) >= 5:
                                 col1 = parts[0]
@@ -434,47 +421,24 @@ class QuanLyVaGieuPhoiFullApp:
         sub_folders_data = []
         danh_sach_file_quet = []
 
-        print("🚀 [KIỂM TRA] Bắt đầu quét các thư mục con từ muc_1 đến muc_6...")
         for i in range(1, 7):
             ten_thu_muc = f"muc_{i}"
             duong_dan_con = os.path.join(BASE_DIR, ten_thu_muc)
             if os.path.exists(duong_dan_con) and os.path.isdir(duong_dan_con):
                 sub_folders_data.append(ten_thu_muc)
-                print(f"   📁 Thư mục nguồn tồn tại: {duong_dan_con}")
                 for file in os.listdir(duong_dan_con):
                     duong_dan_file = os.path.join(duong_dan_con, file)
                     if os.path.isfile(duong_dan_file):
                         danh_sach_file_quet.append(duong_dan_file)
-                        print(f"      📄 Tìm thấy tệp nguồn quét: {file}")
-                    if file.lower().endswith(".py") and not "chay" in file.lower():
-                        try:
-                            cmd = [sys.executable, duong_dan_file]
-                            process = subprocess.Popen(cmd, cwd=duong_dan_con)
-                            process.wait(timeout=30)
-                            dem_thanh_cong += 1
-                            print(f"      ▶️ Thực thi thành công script con: {file}")
-                        except Exception as e:
-                            print(f"      ❌ Lỗi thực thi script con {file}: {e}")
-            else:
-                print(f"   ⚠️ Thư mục không tồn tại: {duong_dan_con}")
-        print(f"✅ [KIỂM TRA] Quét xong. Tổng số tệp nguồn ghi nhận: {len(danh_sach_file_quet)}")
         return dem_thanh_cong, sub_folders_data, danh_sach_file_quet
 
     def run_background_task(self, is_headless=False):
         try:
-            print("⚙️ [CHẠY NGẦM] Bắt đầu tác vụ tự động / Headless trên GitHub...")
             thu_muc_luu = self.thu_muc_luu_hien_tai
             os.makedirs(thu_muc_luu, exist_ok=True)
             self.save_config(thu_muc_luu)
 
-            print(f"   - Thư mục lưu kết quả đích: {thu_muc_luu}")
-            print(f"   - Tệp lịch sử mẫu: {self.template_txt_file} (Tồn tại: {os.path.exists(self.template_txt_file)})")
-            print(f"   - Tệp THUONGLUU.txt: {self.thuong_luu_txt_file} (Tồn tại: {os.path.exists(self.thuong_luu_txt_file)})")
-            print(f"   - Tệp danh sách bệnh: {self.benh_tat_txt_file} (Tồn tại: {os.path.exists(self.benh_tat_txt_file)})")
-
             dem_thanh_cong, sub_folders_data, danh_sach_file_quet = self.thuc_thi_cac_chuong_trinh_con()
-            if os.path.exists(self.template_txt_file):
-                danh_sach_file_quet.append(self.template_txt_file)
             if os.path.exists(self.thuong_luu_txt_file):
                 danh_sach_file_quet.append(self.thuong_luu_txt_file)
 
@@ -482,55 +446,46 @@ class QuanLyVaGieuPhoiFullApp:
             thoi_gian_str = now.strftime("%Y%m%d_%H%M%S")
             default_output_filename = f"{SCRIPT_NAME}_{self.source_dir_name}_{thoi_gian_str}.json"
 
+            # Chỉ lấy các dòng CÓ TRÙNG từ THUONGLUU.txt đưa vào JSON
             lich_su_records = []
-            if os.path.exists(self.template_txt_file):
-                with open(self.template_txt_file, "r", encoding="utf-8") as f:
+            ket_qua_tong_ket = []
+            
+            if os.path.exists(self.thuong_luu_txt_file):
+                with open(self.thuong_luu_txt_file, "r", encoding="utf-8") as f:
                     for line in f:
-                        if "|" in line:
+                        if "|" in line and "Trùng" in line:
                             parts = [p.strip() for p in line.strip().split("|")]
-                            if len(parts) >= 3:
+                            if len(parts) >= 5:
+                                col1 = parts[0]
+                                ten = parts[1].replace("Tên:", "").strip()
+                                thoigian = parts[2].strip()
+                                benh = parts[3].replace("Bệnh:", "").strip()
+                                trangthai = parts[4].replace("TrạngThái:", "").strip()
+
                                 lich_su_records.append({
-                                    "ten": parts[0].replace("Tên:", ""),
-                                    "thoi_gian_chi_tiet": " | ".join(parts[1:-1]),
-                                    "benh_mac": parts[-1].replace("Bệnh:", "")
+                                    "ten": ten,
+                                    "thoi_gian_chi_tiet": thoigian,
+                                    "benh_mac": benh
                                 })
 
-            ket_qua_tong_ket = []
-            ref_numbers_all = [123, 456, 789]
-            for rec in lich_su_records:
-                item_ket_qua = {
-                    "tab": "Tab_Tong_Hop",
-                    "ten": rec["ten"],
-                    "ngay_sinh": "2000-01-01",
-                    "gio_sinh": "00:00",
-                    "chi_so": "Ngày",
-                    "gia_tri_goc": 100,
-                    "phan_nguyen": 10,
-                    "mod_1000_nguyen": 10,
-                    "trung_nguyen": 10 in ref_numbers_all,
-                    "phan_du": 0,
-                    "mod_1000_du": 0,
-                    "trung_du": 0 in ref_numbers_all,
-                    "can_bu": 5,
-                    "thong_tin_du": f"Hết vòng đến bệnh: {rec['benh_mac']}",
-                    "canh_bao_col": "Không cảnh báo",
-                    "moc_thoi_gian": now.strftime("%Y-%m-%d %H:%M:%S"),
-                    "link_video": "https://www.youtube.com/watch?v=example",
-                    "chi_tiet_trung_khop": "Nguyên: 10 (%1000=10) | Dư: 0 (%1000=0)"
-                }
-                ket_qua_tong_ket.append(item_ket_qua)
+                                ket_qua_tong_ket.append({
+                                    "tab": "Tab_Trung_Khop_6_Bang",
+                                    "ten": ten,
+                                    "chi_tiet_tinh_toan": col1,
+                                    "thoi_gian": thoigian,
+                                    "benh_mac": benh,
+                                    "trang_thai": trangthai,
+                                    "moc_thoi_gian": now.strftime("%Y-%m-%d %H:%M:%S")
+                                })
 
             payload = {
                 "metadata": {
                     "script_su_dung": f"{SCRIPT_NAME}.py",
                     "timestamp": now.strftime("%Y-%m-%d %H:%M:%S"),
-                    "date_minus_7_days": (now - timedelta(days=7)).strftime("%Y-%m-%d"),
-                    "date_plus_7_days": (now + timedelta(days=7)).strftime("%Y-%m-%d"),
                     "thu_muc_nguon": self.source_dir_name,
-                    "file_nguon_quet": danh_sach_file_quet
+                    "tong_so_dong_trung_khop": len(ket_qua_tong_ket)
                 },
-                "people": lich_su_records,
-                "ref_numbers": ref_numbers_all,
+                "people_trung": lich_su_records,
                 "tabs_data": sub_folders_data,
                 "ket_qua_tong_ket": ket_qua_tong_ket
             }
@@ -539,7 +494,7 @@ class QuanLyVaGieuPhoiFullApp:
                 out_path = os.path.join(thu_muc_luu, default_output_filename)
                 with open(out_path, "w", encoding="utf-8") as f:
                     json.dump(payload, f, ensure_ascii=False, indent=4)
-                print(f"[{SCRIPT_NAME}.py] ✅ Đã tự động xuất JSON ngầm tại: {out_path}")
+                print(f"[{SCRIPT_NAME}.py] ✅ Đã tự động xuất JSON ngầm (chỉ chứa dòng Trùng) tại: {out_path}")
             else:
                 out_path = filedialog.asksaveasfilename(
                     title="Lưu tệp JSON chuẩn",
@@ -552,7 +507,7 @@ class QuanLyVaGieuPhoiFullApp:
                     return
                 with open(out_path, "w", encoding="utf-8") as f:
                     json.dump(payload, f, ensure_ascii=False, indent=4)
-                messagebox.showinfo("Thành công", f"Đã xuất JSON tại:\n{out_path}")
+                messagebox.showinfo("Thành công", f"Đã xuất JSON (chỉ các dòng Trùng) tại:\n{out_path}")
 
         except Exception as e:
             if is_headless:
