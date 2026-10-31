@@ -4,6 +4,8 @@ on:
   push:
     branches: [ "main", "master" ]
   workflow_dispatch:      # Cho phép bấm nút chạy thủ công bất cứ lúc nào trên điện thoại/web
+  schedule:
+    - cron: '30 22 * * *'   # Chạy tự động vào lúc 22:30 UTC (tức 05:30 sáng giờ Việt Nam hàng ngày)
 
 jobs:
   run-python:
