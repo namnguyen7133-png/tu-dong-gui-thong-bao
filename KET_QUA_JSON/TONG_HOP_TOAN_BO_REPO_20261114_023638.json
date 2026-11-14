@@ -1,0 +1,84 @@
+{
+    "metadata": {
+        "script_dieu_phoi": "dieu_phoi_tong_6_tep.py",
+        "timestamp": "2026-11-14 02:36:38",
+        "tong_so_tep_python_da_chay": 12,
+        "danh_sach_tep_python": [
+            "THONGBAOGIOCHIA_0-4.py",
+            "THONGBAOGIOCU.py",
+            "THONGBAOHOANGDAO.py",
+            "THONGBAOSINHNHAT.py",
+            "THONGBAO_NAM.py",
+            "monanhoangdao.py",
+            "nhacnhosukhoe.py",
+            "phan_bo_gio_thong_minh.py",
+            "quan_ly_thong_bao_ngam.py",
+            "run_from_drive.py",
+            "tinh18tep.py",
+            "tong_hop_json.py"
+        ]
+    },
+    "lich_su_thuc_thi_cac_tep": [
+        {
+            "ten_tep": "THONGBAOGIOCHIA_0-4.py",
+            "trang_thai": "Thành công",
+            "thoi_gian_chay": "2026-11-14 02:36:35"
+        },
+        {
+            "ten_tep": "THONGBAOGIOCU.py",
+            "trang_thai": "Lỗi: Command '['/opt/hostedtoolcache/Python/3.11.18/x64/bin/python', '/home/runner/work/tu-dong-gui-thong-bao/tu-dong-gui-thong-bao/THONGBAOGIOCU.py']' returned non-zero exit status 1.",
+            "thoi_gian_chay": "2026-11-14 02:36:36"
+        },
+        {
+            "ten_tep": "THONGBAOHOANGDAO.py",
+            "trang_thai": "Lỗi: Command '['/opt/hostedtoolcache/Python/3.11.18/x64/bin/python', '/home/runner/work/tu-dong-gui-thong-bao/tu-dong-gui-thong-bao/THONGBAOHOANGDAO.py']' returned non-zero exit status 1.",
+            "thoi_gian_chay": "2026-11-14 02:36:36"
+        },
+        {
+            "ten_tep": "THONGBAOSINHNHAT.py",
+            "trang_thai": "Thành công",
+            "thoi_gian_chay": "2026-11-14 02:36:36"
+        },
+        {
+            "ten_tep": "THONGBAO_NAM.py",
+            "trang_thai": "Lỗi: Command '['/opt/hostedtoolcache/Python/3.11.18/x64/bin/python', '/home/runner/work/tu-dong-gui-thong-bao/tu-dong-gui-thong-bao/THONGBAO_NAM.py']' returned non-zero exit status 1.",
+            "thoi_gian_chay": "2026-11-14 02:36:36"
+        },
+        {
+            "ten_tep": "monanhoangdao.py",
+            "trang_thai": "Lỗi: Command '['/opt/hostedtoolcache/Python/3.11.18/x64/bin/python', '/home/runner/work/tu-dong-gui-thong-bao/tu-dong-gui-thong-bao/monanhoangdao.py']' returned non-zero exit status 1.",
+            "thoi_gian_chay": "2026-11-14 02:36:36"
+        },
+        {
+            "ten_tep": "nhacnhosukhoe.py",
+            "trang_thai": "Lỗi: Command '['/opt/hostedtoolcache/Python/3.11.18/x64/bin/python', '/home/runner/work/tu-dong-gui-thong-bao/tu-dong-gui-thong-bao/nhacnhosukhoe.py']' returned non-zero exit status 1.",
+            "thoi_gian_chay": "2026-11-14 02:36:36"
+        },
+        {
+            "ten_tep": "phan_bo_gio_thong_minh.py",
+            "trang_thai": "Thành công",
+            "thoi_gian_chay": "2026-11-14 02:36:37"
+        },
+        {
+            "ten_tep": "quan_ly_thong_bao_ngam.py",
+            "trang_thai": "Lỗi: Command '['/opt/hostedtoolcache/Python/3.11.18/x64/bin/python', '/home/runner/work/tu-dong-gui-thong-bao/tu-dong-gui-thong-bao/quan_ly_thong_bao_ngam.py']' returned non-zero exit status 1.",
+            "thoi_gian_chay": "2026-11-14 02:36:37"
+        },
+        {
+            "ten_tep": "run_from_drive.py",
+            "trang_thai": "Thành công",
+            "thoi_gian_chay": "2026-11-14 02:36:37"
+        },
+        {
+            "ten_tep": "tinh18tep.py",
+            "trang_thai": "Thành công",
+            "thoi_gian_chay": "2026-11-14 02:36:37"
+        },
+        {
+            "ten_tep": "tong_hop_json.py",
+            "trang_thai": "Thành công",
+            "thoi_gian_chay": "2026-11-14 02:36:38"
+        }
+    ],
+    "chi_tiet_du_lieu_thuong_luu_va_trung_khop": []
+}
